@@ -65,38 +65,40 @@ public class Idk
 
   public void Download()
   {
+    UpdateState(VersionState.Downloading);
+
     Thread.Sleep(5000);
     Console.WriteLine("Downloaded");
-    dispatcher.Invoke(() => {
-      UpdateState(VersionState.Never_Launched);
-    });
+    UpdateState(VersionState.Never_Launched);
   }
 
   public void UpdateState(VersionState newState)
   {
-    this.state = newState;
-    stateBox.Text = this.state.ToString();
-    switch (this.state)
-    {
-      case VersionState.Not_Downloaded:
-        actionButton.Content = "Download";
-        break;
-      case VersionState.Downloading:
-        actionButton.Content = "Play";
-        actionButton.IsEnabled = false;
-        break;
-      case VersionState.Never_Launched:
-      case VersionState.Launched:
-        actionButton.Content = "Play";
-        actionButton.IsEnabled = true;
-        break;
-      case VersionState.Running:
-        actionButton.Content = "Stop";
-        break;
-      case VersionState.Corrupt:
-        actionButton.Content = "Redownload";
-        break;
-    }
+    dispatcher.Invoke(() => {
+      this.state = newState;
+      stateBox.Text = this.state.ToString().Replace('_', ' ');
+      switch (this.state)
+      {
+        case VersionState.Not_Downloaded:
+          actionButton.Content = "Download";
+          break;
+        case VersionState.Downloading:
+          actionButton.Content = "Play";
+          actionButton.IsEnabled = false;
+          break;
+        case VersionState.Never_Launched:
+        case VersionState.Launched:
+          actionButton.Content = "Play";
+          actionButton.IsEnabled = true;
+          break;
+        case VersionState.Running:
+          actionButton.Content = "Stop";
+          break;
+        case VersionState.Corrupt:
+          actionButton.Content = "Redownload";
+          break;
+      }
+    });
   }
 
   private void Button_Click(object sender, RoutedEventArgs e)
@@ -106,9 +108,7 @@ public class Idk
       case VersionState.Not_Downloaded:
       case VersionState.Corrupt:
         Console.WriteLine("Downloading...");
-        Thread downloadThread = new Thread(Download);
-        downloadThread.Start();
-        UpdateState(VersionState.Downloading);
+        (new Thread(Download)).Start();
         break;
       case VersionState.Downloading:
         Console.WriteLine("Can't play game yet, still downloading (and the button is disabled, how did you click this?)");
