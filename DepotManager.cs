@@ -49,13 +49,15 @@ namespace TalosDownpatcher {
 
     private static readonly object downloadLock = new object();
     private List<long> downloadedManifests;
-    private int activeVersion = 0;
     private static readonly object versionLock = new object();
+    private int activeVersion = 0;
 
     public DepotManager() {
       this.downloadedManifests = new List<long>();
-      foreach (var line in File.ReadAllLines(downloadedManifestsLocation)) {
-        this.downloadedManifests.Add(long.Parse(line));
+      if (File.Exists(downloadedManifestsLocation)) {
+        foreach (var line in File.ReadAllLines(downloadedManifestsLocation)) {
+          this.downloadedManifests.Add(long.Parse(line));
+        }
       }
     }
 
@@ -99,12 +101,23 @@ namespace TalosDownpatcher {
     private static void MoveAndMerge(string sourceFolder, string destFolder) {
       Console.WriteLine($"Merging {sourceFolder} into {destFolder}");
 
+      var src = new DirectoryInfo(sourceFolder);
+      if (!src.Exists) return;
+      var dst = new DirectoryInfo(destFolder);
+      if (!dst.Exists) Directory.CreateDirectory(destFolder);
+
+      foreach (var file in src.GetFiles()) {
+        file.MoveTo($"{dst}/{file.Name}");
+      }
+      foreach (var dir in src.GetDirectories()) {
+        MoveAndMerge($"{sourceFolder}/{dir}", $"{destFolder}/{dir}");
+      }
     }
 
     private static void CopyAndReplace(string sourceFolder, string destFolder) {
       Console.WriteLine($"Deleting folder {destFolder} and overwriting with {sourceFolder}");
-
-
+      Directory.Delete(destFolder);
+      MoveAndMerge(sourceFolder, destFolder);
     }
   }
 }
