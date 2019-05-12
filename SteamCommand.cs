@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace TalosDownpatcher {
   public static class SteamCommand {
@@ -7,11 +8,14 @@ namespace TalosDownpatcher {
     public static readonly int gameId = 257510;
 
     public static void DownloadDepot(int depot, long manifest) {
+      Thread.Sleep(1000);
       // TODO
       Console.WriteLine($"download_depot {gameId} {depot} {manifest}");
+      // TODO: Wait until done, somehow
     }
 
     public static void StartGame() {
+      Thread.Sleep(1000);
       // TODO
       Console.WriteLine($"steam://run/{gameId}");
     }
@@ -25,7 +29,7 @@ namespace TalosDownpatcher {
           if (module.FileName.Equals("Talos.exe")) {
             process.Kill();
           } else {
-            // Proccess not found
+            // Process not found
           }
         }
       }

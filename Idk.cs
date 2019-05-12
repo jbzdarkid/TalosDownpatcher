@@ -8,6 +8,7 @@ namespace TalosDownpatcher {
   public enum VersionState {
     Not_Downloaded,
     Downloading,
+    Copying,
     Never_Launched,
     Launched,
     Running,
@@ -54,42 +55,37 @@ namespace TalosDownpatcher {
       actionButton.Margin = new Thickness(160, yPos, 0, 0);
       RootGrid.Children.Add(this.actionButton);
 
-      this.UpdateState(VersionState.Not_Downloaded);
       this.dispatcher = dispatcher;
+      this.UpdateState(VersionState.Not_Downloaded);
       this.depotManager = depotManager;
     }
 
     private void Download() {
       UpdateState(VersionState.Downloading);
-      Console.WriteLine("Downloading...");
-      // TODO: Jump to a background thread.
       depotManager.DownloadDepotsForVersion(this.version);
-
       UpdateState(VersionState.Never_Launched);
-      Console.WriteLine("Downloaded");
     }
 
     private void StartGame() {
-      if (activeVersion == 0) {
-        activeVersion = version;
-      } else if (activeVersion != version) {
-        Console.WriteLine("Version " + activeVersion + " is already running!");
+      UpdateState(VersionState.Copying);
+      var version = depotManager.TrySetActiveVersion(this.version);
+      if (version != this.version) {
+        Console.WriteLine($"Version {version} is already running!");
         return;
       }
 
       UpdateState(VersionState.Running);
-      activeVersion = version;
       SteamCommand.StartGame();
     }
 
     private void StopGame() {
       UpdateState(VersionState.Launched);
-      activeVersion = 0;
       SteamCommand.StopGame();
     }
 
     public void UpdateState(VersionState newState) {
       dispatcher.Invoke(() => {
+        Console.WriteLine($"Transitioning from state {this.state} to {newState}");
         this.state = newState;
         stateBox.Text = newState.ToString().Replace('_', ' ');
         switch (newState) {
@@ -105,6 +101,11 @@ namespace TalosDownpatcher {
             actionButton.Content = "Play";
             actionButton.IsEnabled = true;
             break;
+          case VersionState.Copying:
+            actionButton.Content = "Starting";
+            actionButton.IsEnabled = false;
+            // TODO: Potentially allow for "stop copying" here. Simplest solution is to go the depotManager and stop from there.
+            break;
           case VersionState.Running:
             actionButton.Content = "Stop";
             break;
@@ -119,10 +120,7 @@ namespace TalosDownpatcher {
       switch (this.state) {
         case VersionState.Not_Downloaded:
         case VersionState.Corrupt:
-          Download();
-          break;
-        case VersionState.Downloading:
-          Console.WriteLine("Can't play game yet, still downloading (and the button is disabled, how did you click this?)");
+          new Thread(Download).Start();
           break;
         case VersionState.Never_Launched:
         case VersionState.Launched:

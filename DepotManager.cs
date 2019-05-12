@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace TalosDownpatcher {
   public class DepotManager {
@@ -40,32 +41,70 @@ namespace TalosDownpatcher {
       {220480, new List<long>{4122334240058475272, 1348826399794024471, 1237958166729860756, 2322040020544521685}}
     };
 
-    private static readonly object downloadLock = new object();
+    private static readonly string steamapps = "C:/Program Files (x86)/Steam/steamapps"; // TODO: discover this, somehow
+    private static readonly string activeVersionLocation = $"{steamapps}/common/The Talos Principle";
+    private static readonly string oldVersionLocation = $"{steamapps}/common/The Talos Principle Old Versions";
+    private static readonly string downloadedManifestsLocation = $"{oldVersionLocation}/downloadedManfiests.txt";
+    private static readonly string depotLocation = $"{steamapps}/content/app_257510";
 
+    private static readonly object downloadLock = new object();
     private List<long> downloadedManifests;
+    private int activeVersion = 0;
+    private static readonly object versionLock = new object();
 
     public DepotManager() {
-       this.downloadedManifests = new List<long>();
+      this.downloadedManifests = new List<long>();
+      foreach (var line in File.ReadAllLines(downloadedManifestsLocation)) {
+        this.downloadedManifests.Add(long.Parse(line));
+      }
+    }
+
+    private void SaveDownloadedManifests() {
+      using (TextWriter tw = new StreamWriter(downloadedManifestsLocation)) {
+        foreach (long manifest in this.downloadedManifests) {
+            tw.WriteLine(manifest);
+        }
+      }
+    }
+
+    public int TrySetActiveVersion(int version) {
+      lock (versionLock) {
+        if (activeVersion == 0) {
+          activeVersion = version;
+          CopyAndReplace($"{oldVersionLocation}/{version}", activeVersionLocation);
+        }
+        return activeVersion;
+      }
     }
 
     public void DownloadDepotsForVersion(int version) {
       List<long> manifests = mainfestsForVersion[version];
       lock (downloadLock) {
-        DownloadDepot(257511, manifests[0]);
-        DownloadDepot(257515, manifests[1]);
-        DownloadDepot(257516, manifests[2]);
-        DownloadDepot(257519, manifests[3]);
+        DownloadDepot(version, 257511, manifests[0]);
+        DownloadDepot(version, 257515, manifests[1]);
+        DownloadDepot(version, 257516, manifests[2]);
+        DownloadDepot(version, 257519, manifests[3]);
       }
     }
 
-    private void DownloadDepot(int depot, long manifest) {
+    private void DownloadDepot(int version, int depot, long manifest) {
+      if (this.downloadedManifests.Contains(manifest)) return;
+
       SteamCommand.DownloadDepot(depot, manifest);
-      Thread.Sleep(1000);
-      // TODO: Wait until done, somehow
-      // TODO: Copy this file to a safe location
-      downloadedManifests.Add(manifest);
+      MoveAndMerge($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
+      this.downloadedManifests.Add(manifest);
+      SaveDownloadedManifests();
     }
 
-    // private static void Copy()
+    private static void MoveAndMerge(string sourceFolder, string destFolder) {
+      Console.WriteLine($"Merging {sourceFolder} into {destFolder}");
+
+    }
+
+    private static void CopyAndReplace(string sourceFolder, string destFolder) {
+      Console.WriteLine($"Deleting folder {destFolder} and overwriting with {sourceFolder}");
+
+
+    }
   }
 }
