@@ -84,10 +84,11 @@ namespace TalosDownpatcher {
     public void DownloadDepotsForVersion(int version) {
       List<long> manifests = mainfestsForVersion[version];
       lock (downloadLock) {
-        DownloadDepot(version, 257516, manifests[2]); // .dll
-        DownloadDepot(version, 257511, manifests[0]); // .exe
-        DownloadDepot(version, 257519, manifests[3]); // .signature_catalog
-        DownloadDepot(version, 257515, manifests[1]); // .gro
+        // Loosely ordered by size.
+        DownloadDepot(version, 257516, manifests[2]);
+        DownloadDepot(version, 257511, manifests[0]);
+        DownloadDepot(version, 257519, manifests[3]);
+        DownloadDepot(version, 257515, manifests[1]);
       }
     }
 
@@ -96,15 +97,22 @@ namespace TalosDownpatcher {
 
       SteamCommand.DownloadDepot(depot, manifest);
 
+      int lastKnownFileCount = 0;
       while (true) {
         Thread.Sleep(1000);
+
+        var src = new DirectoryInfo($"{depotLocation}/depot_{depot}");
+        if (!src.Exists) continue;
+        var files = src.GetFiles("*", SearchOption.AllDirectories);
         try {
-          // TODO: Find a lighter-weight check for "in-use".
-          CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
-          break;
-        } catch (IOException) { // File in use, so the depot is still downloading
-          continue;
-        }
+          foreach (var file in files) {
+            var stream = file.Open(FileMode.Open, FileAccess.ReadWrite);
+            stream.Dispose(); // We're not actually trying to modify the file yet.
+          }
+
+          if (files.Length == lastKnownFileCount) break; // Only exist the loop if no new files were added
+        } catch (IOException) { } // File in use, so the depot is still downloading
+        lastKnownFileCount = files.Length;
       }
 
       CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
@@ -112,25 +120,21 @@ namespace TalosDownpatcher {
       SaveDownloadedManifests();
     }
 
-    private static void CopyAndOverwrite(string sourceFolder, string destFolder) {
-      Console.WriteLine($"Merging {sourceFolder} into {destFolder}");
+    private static void CopyAndOverwrite(string srcFolder, string dstFolder) {
+      Console.WriteLine($"Merging {srcFolder} into {dstFolder}");
 
-      var src = new DirectoryInfo(sourceFolder);
+      var src = new DirectoryInfo(srcFolder);
       if (!src.Exists) return;
-      var dst = new DirectoryInfo(destFolder);
-      if (!dst.Exists) Directory.CreateDirectory(destFolder);
+      var dst = new DirectoryInfo(dstFolder);
+      if (!dst.Exists) Directory.CreateDirectory(dstFolder);
 
-      foreach (var file in src.EnumerateFiles("*", SearchOption.AllDirectories)) {
-        File.Copy($"{sourceFolder}/{file.Name}", $"{destFolder}/{file.Name}", true);
+      foreach (var file in src.GetFiles()) {
+        Console.WriteLine("Copying file: " + file.Name);
+        File.Copy(file.FullName, $"{dst}/{file.Name}", true);
+      }
+      foreach (var dir in src.GetDirectories()) {
+        CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}");
       }
     }
-
-    /*
-    private static void CopyAndReplace(string sourceFolder, string destFolder) {
-      Console.WriteLine($"Deleting folder {destFolder} and overwriting with {sourceFolder}");
-      Directory.Delete(destFolder);
-      MoveAndMerge(sourceFolder, destFolder);
-    }
-    */
   }
 }

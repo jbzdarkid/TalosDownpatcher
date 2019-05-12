@@ -15,7 +15,7 @@ namespace TalosDownpatcher {
     Corrupt
   };
 
-  public class Idk {
+  public class VersionUIComponent {
     public static int activeVersion = 0;
 
     private VersionState state;
@@ -26,7 +26,7 @@ namespace TalosDownpatcher {
     private Button actionButton;
     private DepotManager depotManager;
 
-    public Idk(int version, int yPos, Dispatcher dispatcher, Grid RootGrid, DepotManager depotManager) {
+    public VersionUIComponent(int version, int yPos, Dispatcher dispatcher, Grid RootGrid, DepotManager depotManager) {
       this.version = version;
 
       versionBox = new TextBox();

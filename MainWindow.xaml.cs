@@ -3,8 +3,9 @@ using System.Windows;
 
 // TODO: x64/x86 compat
 // TODO: On launch, change time
-// TODO: Only copy files I actually want (i.e. leave other files untouched)
-// ^ So maybe "CopyAndReplace" isn't actually correct?
+// TODO: Main window state is not reading from file / computing from anywhere
+// TODO: Some indicator of 'useful' or 'important' versions.
+// TODO: Editor?
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -19,7 +20,7 @@ namespace TalosDownpatcher {
       DepotManager depotManager = new DepotManager();
 
       for (int i = 0; i < versions.Count; i++) {
-        Idk idk = new Idk(versions[i], 30 + 20 * i, this.Dispatcher, RootGrid, depotManager);
+        VersionUIComponent idk = new VersionUIComponent(versions[i], 30 + 20 * i, this.Dispatcher, RootGrid, depotManager);
       }
     }
   }
