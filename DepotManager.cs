@@ -84,11 +84,11 @@ namespace TalosDownpatcher {
     public void DownloadDepotsForVersion(int version) {
       List<long> manifests = mainfestsForVersion[version];
       lock (downloadLock) {
-        // Loosely ordered by size.
-        DownloadDepot(version, 257516, manifests[2]);
-        DownloadDepot(version, 257511, manifests[0]);
-        DownloadDepot(version, 257519, manifests[3]);
-        DownloadDepot(version, 257515, manifests[1]);
+        // Ordered by size since these are sequential
+        DownloadDepot(version, 257516, manifests[2]); // 2MB
+        DownloadDepot(version, 257519, manifests[3]); // 2MB
+        DownloadDepot(version, 257511, manifests[0]); // 26 MB
+        DownloadDepot(version, 257515, manifests[1]); // 6+ GB
       }
     }
 
