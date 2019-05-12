@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace TalosDownpatcher {
   public class DepotManager {
     private static readonly Dictionary<int, List<long>> mainfestsForVersion = new Dictionary<int, List<long>> {
+      // Version              257511 - Exe         257515 - Gro         257516 - Dll         257519 - Signature
       {429074, new List<long>{8159846362257674313, 2713051319254128482, 3680540037408603213, 1170103677162582368}},
       {426014, new List<long>{3586505834137878681, 6301775319056368422, 8705936455967316907, 1170103677162582368}},
       {424910, new List<long>{4445925190137047197, 5833630477596020402, 5450066894376160295, 1170103677162582368}},
@@ -73,7 +75,7 @@ namespace TalosDownpatcher {
       lock (versionLock) {
         if (activeVersion == 0) {
           activeVersion = version;
-          CopyAndReplace($"{oldVersionLocation}/{version}", activeVersionLocation);
+          CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
         }
         return activeVersion;
       }
@@ -82,10 +84,10 @@ namespace TalosDownpatcher {
     public void DownloadDepotsForVersion(int version) {
       List<long> manifests = mainfestsForVersion[version];
       lock (downloadLock) {
-        DownloadDepot(version, 257511, manifests[0]);
-        DownloadDepot(version, 257515, manifests[1]);
-        DownloadDepot(version, 257516, manifests[2]);
-        DownloadDepot(version, 257519, manifests[3]);
+        DownloadDepot(version, 257516, manifests[2]); // .dll
+        DownloadDepot(version, 257511, manifests[0]); // .exe
+        DownloadDepot(version, 257519, manifests[3]); // .signature_catalog
+        DownloadDepot(version, 257515, manifests[1]); // .gro
       }
     }
 
@@ -93,12 +95,24 @@ namespace TalosDownpatcher {
       if (this.downloadedManifests.Contains(manifest)) return;
 
       SteamCommand.DownloadDepot(depot, manifest);
-      MoveAndMerge($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
+
+      while (true) {
+        Thread.Sleep(1000);
+        try {
+          // TODO: Find a lighter-weight check for "in-use".
+          CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
+          break;
+        } catch (IOException) { // File in use, so the depot is still downloading
+          continue;
+        }
+      }
+
+      CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
       this.downloadedManifests.Add(manifest);
       SaveDownloadedManifests();
     }
 
-    private static void MoveAndMerge(string sourceFolder, string destFolder) {
+    private static void CopyAndOverwrite(string sourceFolder, string destFolder) {
       Console.WriteLine($"Merging {sourceFolder} into {destFolder}");
 
       var src = new DirectoryInfo(sourceFolder);
@@ -106,18 +120,17 @@ namespace TalosDownpatcher {
       var dst = new DirectoryInfo(destFolder);
       if (!dst.Exists) Directory.CreateDirectory(destFolder);
 
-      foreach (var file in src.GetFiles()) {
-        file.MoveTo($"{dst}/{file.Name}");
-      }
-      foreach (var dir in src.GetDirectories()) {
-        MoveAndMerge($"{sourceFolder}/{dir}", $"{destFolder}/{dir}");
+      foreach (var file in src.EnumerateFiles("*", SearchOption.AllDirectories)) {
+        File.Copy($"{sourceFolder}/{file.Name}", $"{destFolder}/{file.Name}", true);
       }
     }
 
+    /*
     private static void CopyAndReplace(string sourceFolder, string destFolder) {
       Console.WriteLine($"Deleting folder {destFolder} and overwriting with {sourceFolder}");
       Directory.Delete(destFolder);
       MoveAndMerge(sourceFolder, destFolder);
     }
+    */
   }
 }

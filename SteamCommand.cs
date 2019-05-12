@@ -1,39 +1,38 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
+using WindowsInput;
+using WindowsInput.Native;
 
 namespace TalosDownpatcher {
   public static class SteamCommand {
 
-    public static readonly int gameId = 257510;
+    public static readonly int GAME_ID = 257510;
+    private static InputSimulator sim = new InputSimulator();
 
     public static void DownloadDepot(int depot, long manifest) {
-      Thread.Sleep(1000);
-      // TODO
-      Console.WriteLine($"download_depot {gameId} {depot} {manifest}");
-      // TODO: Wait until done, somehow
+      Process.Start($"steam://nav/console");
+      Thread.Sleep(100); // Slight delay for steam to become foreground
+
+      sim.Keyboard.TextEntry($"download_depot {GAME_ID} {depot} {manifest}");
+      sim.Keyboard.KeyPress(VirtualKeyCode.RETURN);
     }
 
     public static void StartGame() {
-      Thread.Sleep(1000);
-      // TODO
-      Console.WriteLine($"steam://run/{gameId}");
+      Process.Start($"steam://run/{GAME_ID}");
     }
 
     public static void StopGame() {
       // https://stackoverflow.com/a/49245781
       Process[] runningProcesses = Process.GetProcesses();
       foreach (Process process in runningProcesses) {
-        // now check the modules of the process
         foreach (ProcessModule module in process.Modules) {
           if (module.FileName.Equals("Talos.exe")) {
             process.Kill();
-          } else {
-            // Process not found
           }
         }
       }
     }
-
-  }
+ }
 }
