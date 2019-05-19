@@ -26,7 +26,7 @@ namespace TalosDownpatcher {
     private Button actionButton;
     private DepotManager depotManager;
 
-    public VersionUIComponent(int version, int yPos, Dispatcher dispatcher, Grid RootGrid, DepotManager depotManager) {
+    public VersionUIComponent(int version, int yPos, MainWindow mainWindow) {
       this.version = version;
 
       versionBox = new TextBox();
@@ -36,7 +36,7 @@ namespace TalosDownpatcher {
       versionBox.Width = 51;
       versionBox.Margin = new Thickness(10, yPos, 0, 0);
       versionBox.Text = version.ToString();
-      RootGrid.Children.Add(this.versionBox);
+      mainWindow.RootGrid.Children.Add(this.versionBox);
 
       stateBox = new TextBox();
       stateBox.HorizontalAlignment = HorizontalAlignment.Left;
@@ -44,7 +44,7 @@ namespace TalosDownpatcher {
       stateBox.Height = 21;
       stateBox.Width = 101;
       stateBox.Margin = new Thickness(60, yPos, 0, 0);
-      RootGrid.Children.Add(this.stateBox);
+      mainWindow.RootGrid.Children.Add(this.stateBox);
 
       actionButton = new Button();
       actionButton.HorizontalAlignment = HorizontalAlignment.Left;
@@ -53,11 +53,11 @@ namespace TalosDownpatcher {
       actionButton.Width = 71;
       actionButton.Click += Button_Click;
       actionButton.Margin = new Thickness(160, yPos, 0, 0);
-      RootGrid.Children.Add(this.actionButton);
+      mainWindow.RootGrid.Children.Add(this.actionButton);
 
-      this.dispatcher = dispatcher;
+      this.dispatcher = mainWindow.Dispatcher;
       this.UpdateState(VersionState.Not_Downloaded);
-      this.depotManager = depotManager;
+      this.depotManager = mainWindow.depotManager;
     }
 
     private void Download() {
