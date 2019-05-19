@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    public readonly Manifests manifests;
+    public readonly Manifests manifests; // TODO: private
 
     private readonly string steamapps;
     private readonly string activeVersionLocation;
@@ -30,6 +30,7 @@ namespace TalosDownpatcher {
         if (activeVersion == 0) {
           activeVersion = version;
           // Delete file Content/Talos/All.dat
+          // Copy x86 binaries to x64 folder if x64 folder does not exist in source (?), or maybe for hard-coded version #s
           CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
         }
         return activeVersion;
