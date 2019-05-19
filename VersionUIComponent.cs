@@ -18,8 +18,6 @@ namespace TalosDownpatcher {
   };
 
   public class VersionUIComponent {
-    public static int activeVersion = 0;
-
     private Dispatcher dispatcher;
     private DepotManager depotManager;
 

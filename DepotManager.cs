@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    private readonly Manifests manifests;
+    private readonly Dictionary<int, Dictionary<int, Datum>> manifestData;
 
     private readonly string steamapps;
     private readonly string activeVersionLocation;
@@ -19,7 +19,7 @@ namespace TalosDownpatcher {
     private int activeVersion;
 
     public DepotManager() {
-      manifests = new Manifests();
+      manifestData = ManifestData.GetData();
       steamapps = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam", "InstallPath", "") + "/steamapps";
       activeVersionLocation = $"{steamapps}/common/The Talos Principle";
       oldVersionLocation = $"{steamapps}/common/The Talos Principle Old Versions";
@@ -63,14 +63,8 @@ namespace TalosDownpatcher {
 
     public void DownloadDepotsForVersion(int version, Action onDownloadStart, Action<double> showDownloadProgress) {
       lock (downloadLock) {
-        // Ordered by size (2MB, 2MB, 26MB, 6+ GB)
-        var depots = new List<int> { 257516, 257519, 257511, 257515 };
-
         SteamCommand.OpenConsole();
-        foreach (var depot in depots) {
-          var datum = this.manifests.data[version][depot];
-          // SteamCommand.DownloadDepot(depot, datum.manifest);
-        }
+        foreach (var depot in ManifestData.depots) SteamCommand.DownloadDepot(depot, manifestData[version][depot].manifest);
         onDownloadStart();
 
         double downloadFraction = 0.0;
@@ -80,26 +74,22 @@ namespace TalosDownpatcher {
           showDownloadProgress(downloadFraction);
         }
 
-        foreach (var depot in depots) {
+        foreach (var depot in ManifestData.depots) {
           CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
         }
       }
     }
 
     public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
-      var depots = new List<int> { 257511, 257515, 257516, 257519 };
-
       long expectedSize = 0;
-      foreach (var depot in depots) {
-        expectedSize += manifests.data[version][depot].size;
+      foreach (var depot in ManifestData.depots) {
+        expectedSize += manifestData[version][depot].size;
       }
 
       // @Performance: If I need to, I can compute number of files downloaded instead of folder size first.
       long actualSize = 0;
       if (isInTemporaryLocation) {
-        foreach (var depot in depots) {
-          actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
-        }
+        foreach (var depot in ManifestData.depots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
       } else {
         actualSize += GetFolderSize($"{oldVersionLocation}/{version}");
       }
@@ -119,20 +109,13 @@ namespace TalosDownpatcher {
     }
 
     private static void CopyAndOverwrite(string srcFolder, string dstFolder) {
-      Console.WriteLine($"Merging {srcFolder} into {dstFolder}");
-
       var src = new DirectoryInfo(srcFolder);
       if (!src.Exists) return;
       var dst = new DirectoryInfo(dstFolder);
       if (!dst.Exists) Directory.CreateDirectory(dstFolder);
 
-      foreach (var file in src.GetFiles()) {
-        Console.WriteLine("Copying file: " + file.Name);
-        File.Copy(file.FullName, $"{dst}/{file.Name}", true);
-      }
-      foreach (var dir in src.GetDirectories()) {
-        CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}");
-      }
+      foreach (var dir in src.GetDirectories()) CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}");
+      foreach (var file in src.GetFiles()) File.Copy(file.FullName, $"{dst}/{file.Name}", true);
     }
   }
 }

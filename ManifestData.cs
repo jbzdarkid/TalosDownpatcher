@@ -11,18 +11,23 @@ namespace TalosDownpatcher {
       this.size = size;
     }
   }
-  public class Manifests {
-    public static List<int> versions = new List<int> {
-      429074, 326589, 301136, 244371, // Common versions
+
+  public class ManifestData {
+    public static readonly List<int> versions = new List<int> {
+      429074, 326589, 301136, 244371, // Common versions listed first for convenience.
       426014, 424910, 300763, 293384, 291145, 284152, 277544, 269335,
       267252, 264510, 260924, 258375, 252786, 250756, 249913, 249740,
       248828, 248139, 246379, 243520, 226087, 224995, 224531, 223249,
       222477, 221394, 220996, 220675, 220625, 220480
     };
-    public Dictionary<int, Dictionary<int, Datum>> data;
 
-    public Manifests() {
-      data = new Dictionary<int, Dictionary<int, Datum>>();
+    // Ordered by size (2MB, 2MB, 26MB, 6+ GB)
+    public static readonly List<int> depots = new List<int> {
+        257516, 257519, 257511, 257515
+    };
+
+    public static Dictionary<int, Dictionary<int, Datum>> GetData() {
+      var data = new Dictionary<int, Dictionary<int, Datum>>();
       foreach (var version in versions) {
         data[version] = new Dictionary<int, Datum>();
       }
@@ -100,8 +105,8 @@ namespace TalosDownpatcher {
       data[429074][257516] = new Datum(3680540037408603213, 11, 33548240);
       data[426014][257516] = new Datum(8705936455967316907, 11, 33548240);
       data[424910][257516] = new Datum(5450066894376160295, 11, 33548240);
-      data[326589][257516] = new Datum(0827084533033961837, 6, 8172400);  
-      data[301136][257516] = new Datum(0827084533033961837, 6, 8172400); 
+      data[326589][257516] = new Datum(0827084533033961837, 6, 8172400);
+      data[301136][257516] = new Datum(0827084533033961837, 6, 8172400);
       data[300763][257516] = new Datum(0827084533033961837, 6, 8172400);
       data[293384][257516] = new Datum(0827084533033961837, 6, 8172400);
       data[291145][257516] = new Datum(0827084533033961837, 6, 8172400);
@@ -132,9 +137,9 @@ namespace TalosDownpatcher {
       data[220625][257516] = new Datum(1237958166729860756, 6, 117245);
       data[220480][257516] = new Datum(1237958166729860756, 6, 117245);
 
-      data[429074][257519] = new Datum(1170103677162582368, 0, 0);         
-      data[426014][257519] = new Datum(1170103677162582368, 0, 0); 
-      data[424910][257519] = new Datum(1170103677162582368, 0, 0); 
+      data[429074][257519] = new Datum(1170103677162582368, 0, 0);
+      data[426014][257519] = new Datum(1170103677162582368, 0, 0);
+      data[424910][257519] = new Datum(1170103677162582368, 0, 0);
       data[326589][257519] = new Datum(7686943783455980924, 1, 2282132);
       data[301136][257519] = new Datum(3588926819998531108, 1, 2260932);
       data[300763][257519] = new Datum(8838046835968752341, 1, 2260932);
@@ -166,6 +171,7 @@ namespace TalosDownpatcher {
       data[220675][257519] = new Datum(4554990112195176406, 1, 1789447);
       data[220625][257519] = new Datum(1272083368566319066, 1, 1789447);
       data[220480][257519] = new Datum(2322040020544521685, 1, 1739595);
+      return data;
     }
   }
 }

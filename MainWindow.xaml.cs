@@ -9,9 +9,9 @@ namespace TalosDownpatcher {
       InitializeComponent();
       this.depotManager = new DepotManager();
       int activeVersion = depotManager.GetActiveVersion();
-      for (int i = 0; i < Manifests.versions.Count; i++) {
-        var uiComponent = new VersionUIComponent(Manifests.versions[i], 30 + 20 * i, this);
-        if (Manifests.versions[i] == activeVersion) {
+      for (int i = 0; i < ManifestData.versions.Count; i++) {
+        var uiComponent = new VersionUIComponent(ManifestData.versions[i], 30 + 20 * i, this);
+        if (ManifestData.versions[i] == activeVersion) {
           uiComponent.UpdateState(VersionState.Active);
         }
       }
