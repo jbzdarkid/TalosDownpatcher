@@ -6,16 +6,17 @@ using System.Threading;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    public readonly Manifests manifests; // TODO: private
+    private readonly Manifests manifests;
 
     private readonly string steamapps;
     private readonly string activeVersionLocation;
     private readonly string oldVersionLocation;
     private readonly string depotLocation;
+    private readonly string activeVersionFile;
 
     private static readonly object downloadLock = new object();
     private static readonly object versionLock = new object();
-    private int activeVersion = 0;
+    private int activeVersion;
 
     public DepotManager() {
       manifests = new Manifests();
@@ -23,16 +24,39 @@ namespace TalosDownpatcher {
       activeVersionLocation = $"{steamapps}/common/The Talos Principle";
       oldVersionLocation = $"{steamapps}/common/The Talos Principle Old Versions";
       depotLocation = $"{steamapps}/content/app_257510";
+      activeVersionFile = $"{activeVersionLocation}/active_version.txt";
+
+      lock (versionLock) {
+        activeVersion = 0;
+        if (File.Exists(activeVersionFile)) {
+          using (var file = File.OpenText(activeVersionFile)) {
+            lock (versionLock) {
+              activeVersion = int.Parse(file.ReadLine());
+            }
+          }
+        }
+      }
     }
 
     public int TrySetActiveVersion(int version) {
       lock (versionLock) {
         if (activeVersion == 0) {
           activeVersion = version;
-          // Delete file Content/Talos/All.dat
-          // Copy x86 binaries to x64 folder if x64 folder does not exist in source (?), or maybe for hard-coded version #s
+          // Delete files created in newer versions which interfere with older versions.
+          File.Delete($"{activeVersionLocation}/Content/Talos/All.dat");
+
+          // Copy x86 binaries to x64 folder. They may be overwritten by the next copy operation.
+          CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
+
           CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
+          File.WriteAllText(activeVersionFile, activeVersion.ToString());
         }
+        return activeVersion;
+      }
+    }
+
+    public int GetActiveVersion() {
+      lock (versionLock) {
         return activeVersion;
       }
     }
@@ -45,7 +69,7 @@ namespace TalosDownpatcher {
         SteamCommand.OpenConsole();
         foreach (var depot in depots) {
           var datum = this.manifests.data[version][depot];
-          SteamCommand.DownloadDepot(depot, datum.manifest);
+          // SteamCommand.DownloadDepot(depot, datum.manifest);
         }
         onDownloadStart();
 
@@ -63,7 +87,7 @@ namespace TalosDownpatcher {
     }
 
     public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
-      var depots = new List<int> { 257511, 257515, 257516, 257519};
+      var depots = new List<int> { 257511, 257515, 257516, 257519 };
 
       long expectedSize = 0;
       foreach (var depot in depots) {

@@ -40,6 +40,7 @@ namespace TalosDownpatcher {
       versionBox.Width = 51;
       versionBox.Margin = new Thickness(10, yPos, 0, 0);
       versionBox.Text = version.ToString();
+      versionBox.IsReadOnly = true;
       mainWindow.RootGrid.Children.Add(versionBox);
 
       downloadBar = new Rectangle();
@@ -55,7 +56,7 @@ namespace TalosDownpatcher {
       stateBox.HorizontalAlignment = HorizontalAlignment.Left;
       stateBox.VerticalAlignment = VerticalAlignment.Top;
       stateBox.Height = 21;
-      stateBox.Width = 101;
+      stateBox.Width = 121;
       stateBox.Margin = new Thickness(60, yPos, 0, 0);
       stateBox.Background = Brushes.Transparent;
       stateBox.IsReadOnly = true;
@@ -67,7 +68,7 @@ namespace TalosDownpatcher {
       actionButton.Height = 21;
       actionButton.Width = 71;
       actionButton.Click += Button_Click;
-      actionButton.Margin = new Thickness(160, yPos, 0, 0);
+      actionButton.Margin = new Thickness(180, yPos, 0, 0);
       mainWindow.RootGrid.Children.Add(actionButton);
 
       dispatcher = mainWindow.Dispatcher;
@@ -93,7 +94,7 @@ namespace TalosDownpatcher {
         });
       }, delegate (double fractionDownloaded) {
         dispatcher.Invoke(() => {
-          this.downloadBar.Width = 1 + 100 * fractionDownloaded;
+          this.downloadBar.Width = stateBox.Width * fractionDownloaded;
         });
       });
       UpdateState(VersionState.Downloaded);
