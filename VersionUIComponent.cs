@@ -2,29 +2,33 @@
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace TalosDownpatcher {
   public enum VersionState {
     Not_Downloaded,
+    Corrupt,
+    Download_Pending,
     Downloading,
+    Downloaded,
     Copying,
-    Never_Launched,
-    Launched,
-    Running,
-    Corrupt
+    Active,
   };
 
   public class VersionUIComponent {
     public static int activeVersion = 0;
 
+    private Dispatcher dispatcher;
+    private DepotManager depotManager;
+
     private VersionState state;
     private readonly int version;
-    private Dispatcher dispatcher;
     private TextBox versionBox;
+    private Rectangle downloadBar;
     private TextBox stateBox;
     private Button actionButton;
-    private DepotManager depotManager;
 
     public VersionUIComponent(int version, int yPos, MainWindow mainWindow) {
       this.version = version;
@@ -36,7 +40,16 @@ namespace TalosDownpatcher {
       versionBox.Width = 51;
       versionBox.Margin = new Thickness(10, yPos, 0, 0);
       versionBox.Text = version.ToString();
-      mainWindow.RootGrid.Children.Add(this.versionBox);
+      mainWindow.RootGrid.Children.Add(versionBox);
+
+      downloadBar = new Rectangle();
+      downloadBar.HorizontalAlignment = HorizontalAlignment.Left;
+      downloadBar.VerticalAlignment = VerticalAlignment.Top;
+      downloadBar.Height = 21;
+      downloadBar.Width = 1;
+      downloadBar.Margin = new Thickness(60, yPos, 0, 0);
+      downloadBar.Fill = new SolidColorBrush(Colors.Green);
+      mainWindow.RootGrid.Children.Add(downloadBar);
 
       stateBox = new TextBox();
       stateBox.HorizontalAlignment = HorizontalAlignment.Left;
@@ -44,7 +57,9 @@ namespace TalosDownpatcher {
       stateBox.Height = 21;
       stateBox.Width = 101;
       stateBox.Margin = new Thickness(60, yPos, 0, 0);
-      mainWindow.RootGrid.Children.Add(this.stateBox);
+      stateBox.Background = Brushes.Transparent;
+      stateBox.IsReadOnly = true;
+      mainWindow.RootGrid.Children.Add(stateBox);
 
       actionButton = new Button();
       actionButton.HorizontalAlignment = HorizontalAlignment.Left;
@@ -53,64 +68,82 @@ namespace TalosDownpatcher {
       actionButton.Width = 71;
       actionButton.Click += Button_Click;
       actionButton.Margin = new Thickness(160, yPos, 0, 0);
-      mainWindow.RootGrid.Children.Add(this.actionButton);
+      mainWindow.RootGrid.Children.Add(actionButton);
 
-      this.dispatcher = mainWindow.Dispatcher;
-      this.UpdateState(VersionState.Not_Downloaded);
-      this.depotManager = mainWindow.depotManager;
+      dispatcher = mainWindow.Dispatcher;
+      depotManager = mainWindow.depotManager;
+
+      double downloadFraction = depotManager.GetDownloadFraction(this.version, false);
+      if (downloadFraction == 0.0) {
+        UpdateState(VersionState.Not_Downloaded);
+      } else if (downloadFraction == 1.0) {
+        UpdateState(VersionState.Downloaded);
+      } else {
+        Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
+        UpdateState(VersionState.Corrupt);
+      }
     }
 
     private void Download() {
-      UpdateState(VersionState.Downloading);
-      depotManager.DownloadDepotsForVersion(this.version);
-      UpdateState(VersionState.Never_Launched);
+      UpdateState(VersionState.Download_Pending);
+      depotManager.DownloadDepotsForVersion(this.version, delegate {
+        dispatcher.Invoke(() => {
+          UpdateState(VersionState.Downloading);
+          Application.Current.MainWindow.Activate();
+        });
+      }, delegate (double fractionDownloaded) {
+        dispatcher.Invoke(() => {
+          this.downloadBar.Width = 1 + 100 * fractionDownloaded;
+        });
+      });
+      UpdateState(VersionState.Downloaded);
     }
 
-    private void StartGame() {
+    private void SetActive() {
       UpdateState(VersionState.Copying);
       var version = depotManager.TrySetActiveVersion(this.version);
       if (version != this.version) {
         Console.WriteLine($"Version {version} is already running!");
         return;
       }
-
-      UpdateState(VersionState.Running);
-      SteamCommand.StartGame();
+      UpdateState(VersionState.Active);
     }
 
-    private void StopGame() {
-      UpdateState(VersionState.Launched);
-      SteamCommand.StopGame();
+    public void LaunchGame() {
+      if (version <= 249740) DateUtils.SetYears(-3);
+      SteamCommand.StartGame();
+      Thread.Sleep(5000);
+      if (version <= 249740) DateUtils.SetYears(+3);
     }
 
     public void UpdateState(VersionState newState) {
       dispatcher.Invoke(() => {
-        Console.WriteLine($"Transitioning from state {this.state} to {newState}");
         this.state = newState;
         stateBox.Text = newState.ToString().Replace('_', ' ');
         switch (newState) {
           case VersionState.Not_Downloaded:
             actionButton.Content = "Download";
             break;
+          case VersionState.Corrupt:
+            actionButton.Content = "Redownload";
+            break;
+          case VersionState.Download_Pending:
           case VersionState.Downloading:
-            actionButton.Content = "Play";
+            actionButton.Content = "Set Active";
             actionButton.IsEnabled = false;
             break;
-          case VersionState.Never_Launched:
-          case VersionState.Launched:
-            actionButton.Content = "Play";
+          case VersionState.Downloaded:
+            downloadBar.Width = 1;
+            actionButton.Content = "Set Active";
             actionButton.IsEnabled = true;
             break;
           case VersionState.Copying:
-            actionButton.Content = "Starting";
+            actionButton.Content = "Play";
             actionButton.IsEnabled = false;
-            // TODO: Potentially allow for "stop copying" here. Simplest solution is to go the depotManager and stop from there.
             break;
-          case VersionState.Running:
-            actionButton.Content = "Stop";
-            break;
-          case VersionState.Corrupt:
-            actionButton.Content = "Redownload";
+          case VersionState.Active:
+            actionButton.Content = "Play";
+            actionButton.IsEnabled = true;
             break;
         }
       });
@@ -120,14 +153,13 @@ namespace TalosDownpatcher {
       switch (this.state) {
         case VersionState.Not_Downloaded:
         case VersionState.Corrupt:
-          new Thread(Download).Start();
+          new Thread(Download) { IsBackground = true }.Start();
           break;
-        case VersionState.Never_Launched:
-        case VersionState.Launched:
-          StartGame();
+        case VersionState.Downloaded:
+          new Thread(SetActive) { IsBackground = true }.Start();
           break;
-        case VersionState.Running:
-          StopGame();
+        case VersionState.Active:
+          new Thread(LaunchGame) { IsBackground = true }.Start();
           break;
       }
     }
