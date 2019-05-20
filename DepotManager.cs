@@ -20,7 +20,7 @@ namespace TalosDownpatcher {
 
     public DepotManager() {
       manifestData = ManifestData.GetData();
-      steamapps = (string)Registry.GetValue(@"HKEY_CURRNET_USER\SOFTWARE\Valve\Steam", "SteamPath", @"C:\Program Files (x86)\Steam") + "/steamapps";
+      steamapps = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", @"C:\Program Files (x86)\Steam") + "/steamapps";
       activeVersionLocation = $"{steamapps}/common/The Talos Principle";
       oldVersionLocation = $"{steamapps}/common/The Talos Principle Old Versions";
       depotLocation = $"{steamapps}/content/app_257510";

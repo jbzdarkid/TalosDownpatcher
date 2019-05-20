@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+// TODO: SetActive needs work when used twice. We seem to get stuck in Copying (and definitely aren't changing state of other components).
 // TODO: Editor -- this is Apple's problem to solve.
 
 namespace TalosDownpatcher {
