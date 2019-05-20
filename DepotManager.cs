@@ -20,7 +20,7 @@ namespace TalosDownpatcher {
 
     public DepotManager() {
       manifestData = ManifestData.GetData();
-      steamapps = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam", "InstallPath", "") + "/steamapps";
+      steamapps = (string)Registry.GetValue(@"HKEY_CURRNET_USER\SOFTWARE\Valve\Steam", "SteamPath", @"C:\Program Files (x86)\Steam") + "/steamapps";
       activeVersionLocation = $"{steamapps}/common/The Talos Principle";
       oldVersionLocation = $"{steamapps}/common/The Talos Principle Old Versions";
       depotLocation = $"{steamapps}/content/app_257510";
@@ -42,10 +42,13 @@ namespace TalosDownpatcher {
       lock (versionLock) {
         if (activeVersion == 0) {
           activeVersion = version;
-          // Delete files created in newer versions which interfere with older versions.
-          File.Delete($"{activeVersionLocation}/Content/Talos/All.dat");
 
-          // Copy x86 binaries to x64 folder. They may be overwritten by the next copy operation.
+          try {
+            // Delete files created in newer versions which interfere with older versions.
+            File.Delete($"{activeVersionLocation}/Content/Talos/All.dat");
+          } catch (DirectoryNotFoundException) { } // File doesn't exist
+
+          // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
           CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
 
           CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
