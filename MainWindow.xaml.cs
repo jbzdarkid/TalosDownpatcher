@@ -13,7 +13,7 @@ namespace TalosDownpatcher {
       for (int i = 0; i < ManifestData.versions.Count; i++) {
         var uiComponent = new VersionUIComponent(ManifestData.versions[i], 30 + 20 * i, this);
         if (ManifestData.versions[i] == activeVersion) {
-          uiComponent.UpdateState(VersionState.Active);
+          uiComponent.state = VersionState.Active;
         }
       }
     }

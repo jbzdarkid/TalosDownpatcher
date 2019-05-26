@@ -21,7 +21,6 @@ namespace TalosDownpatcher {
     private Dispatcher dispatcher;
     private DepotManager depotManager;
 
-    private VersionState state;
     private readonly int version;
     private TextBox versionBox;
     private Rectangle downloadBar;
@@ -74,52 +73,24 @@ namespace TalosDownpatcher {
 
       double downloadFraction = depotManager.GetDownloadFraction(this.version, false);
       if (downloadFraction == 0.0) {
-        UpdateState(VersionState.Not_Downloaded);
+        state = VersionState.Not_Downloaded;
       } else if (downloadFraction == 1.0) {
-        UpdateState(VersionState.Downloaded);
+        state = VersionState.Downloaded;
       } else {
         Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
-        UpdateState(VersionState.Corrupt);
+        state = VersionState.Corrupt;
       }
     }
 
-    private void Download() {
-      UpdateState(VersionState.Download_Pending);
-      depotManager.DownloadDepotsForVersion(this.version, delegate {
-        dispatcher.Invoke(() => {
-          UpdateState(VersionState.Downloading);
-          Application.Current.MainWindow.Activate();
-        });
-      }, delegate (double fractionDownloaded) {
-        dispatcher.Invoke(() => {
-          this.downloadBar.Width = stateBox.Width * fractionDownloaded;
-        });
-      });
-      UpdateState(VersionState.Downloaded);
-    }
-
-    private void SetActive() {
-      UpdateState(VersionState.Copying);
-      var version = depotManager.TrySetActiveVersion(this.version);
-      if (version != this.version) {
-        Console.WriteLine($"Version {version} is already running!");
-        return;
+    public VersionState state {
+      get {
+        return state;
       }
-      UpdateState(VersionState.Active);
-    }
+      set {
+        state = value;
+        stateBox.Text = value.ToString().Replace('_', ' ');
 
-    public void LaunchGame() {
-      if (version <= 249740) DateUtils.SetYears(-3);
-      SteamCommand.StartGame();
-      Thread.Sleep(5000);
-      if (version <= 249740) DateUtils.SetYears(+3);
-    }
-
-    public void UpdateState(VersionState newState) {
-      dispatcher.Invoke(() => {
-        this.state = newState;
-        stateBox.Text = newState.ToString().Replace('_', ' ');
-        switch (newState) {
+        switch (value) {
           case VersionState.Not_Downloaded:
             actionButton.Content = "Download";
             break;
@@ -145,9 +116,41 @@ namespace TalosDownpatcher {
             actionButton.IsEnabled = true;
             break;
         }
-      });
+      }
     }
 
+    private void Download() {
+      state = VersionState.Download_Pending;
+      depotManager.DownloadDepotsForVersion(this.version, delegate {
+        dispatcher.Invoke(() => {
+          state = VersionState.Downloading;
+          Application.Current.MainWindow.Activate();
+        });
+      }, delegate (double fractionDownloaded) {
+        dispatcher.Invoke(() => {
+          this.downloadBar.Width = stateBox.Width * fractionDownloaded;
+        });
+      });
+      state = VersionState.Downloaded;
+    }
+
+    private void SetActive() {
+      state = VersionState.Copying;
+      var version = depotManager.TrySetActiveVersion(this.version);
+      if (version != this.version) {
+        Console.WriteLine($"Version {version} is already running!");
+        return;
+      }
+      state = VersionState.Active;
+    }
+
+    public void LaunchGame() {
+      if (version <= 249740) DateUtils.SetYears(-3);
+      SteamCommand.StartGame();
+      Thread.Sleep(5000);
+      if (version <= 249740) DateUtils.SetYears(+3);
+    }
+    
     private void Button_Click(object sender, RoutedEventArgs e) {
       switch (this.state) {
         case VersionState.Not_Downloaded:
