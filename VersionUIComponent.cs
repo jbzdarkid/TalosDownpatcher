@@ -70,16 +70,10 @@ namespace TalosDownpatcher {
 
       dispatcher = mainWindow.Dispatcher;
       depotManager = mainWindow.depotManager;
+    }
 
-      double downloadFraction = depotManager.GetDownloadFraction(this.version, false);
-      if (downloadFraction == 0.0) {
-        state = VersionState.Not_Downloaded;
-      } else if (downloadFraction == 1.0) {
-        state = VersionState.Downloaded;
-      } else {
-        Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
-        state = VersionState.Corrupt;
-      }
+    public void SetDownloadFraction(double fractionDownloaded) {
+      downloadBar.Width = stateBox.Width * fractionDownloaded;
     }
 
     public VersionState state {
