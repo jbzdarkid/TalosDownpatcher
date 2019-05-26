@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows;
-// TODO: SetActive needs work when used twice. We seem to get stuck in Copying (and definitely aren't changing state of other components).
 // TODO: Editor -- this is Apple's problem to solve.
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
-    public DepotManager depotManager;
-    private Dictionary<int, VersionUIComponent> uiComponents;
+    public DepotManager depotManager = new DepotManager();
+    private Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
 
     public MainWindow() {
       InitializeComponent();
-      this.depotManager = new DepotManager();
       int activeVersion = depotManager.GetActiveVersion();
       for (int i = 0; i < ManifestData.versions.Count; i++) {
         int version = ManifestData.versions[i];
@@ -20,17 +19,43 @@ namespace TalosDownpatcher {
         double downloadFraction = depotManager.GetDownloadFraction(version, false);
         if (downloadFraction == 1.0) {
           if (ManifestData.versions[i] == activeVersion) {
-            uiComponent.state = VersionState.Active;
+            uiComponent.State = VersionState.Active;
           } else {
-            uiComponent.state = VersionState.Downloaded;
+            uiComponent.State = VersionState.Downloaded;
           }
         } else if (downloadFraction == 0.0) {
-          uiComponent.state = VersionState.Not_Downloaded;
+          uiComponent.State = VersionState.Not_Downloaded;
         } else {
           Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
-          uiComponent.state = VersionState.Corrupt;
+          uiComponent.State = VersionState.Corrupt;
         }
-        // uiComponents[version] = uiComponent;
+        uiComponents[version] = uiComponent;
+      }
+    }
+
+    // This function is always called on a background thread.
+    public void OnClick(VersionUIComponent component) {
+      switch (component.State) {
+        case VersionState.Not_Downloaded:
+        case VersionState.Corrupt:
+          component.State = VersionState.Download_Pending;
+          depotManager.DownloadDepotsForVersion(component.version, delegate {
+            component.State = VersionState.Downloading;
+          }, component.SetDownloadFraction);
+          component.State = VersionState.Downloaded;
+          break;
+        case VersionState.Downloaded:
+          uiComponents[depotManager.GetActiveVersion()].State = VersionState.Downloaded;
+          component.State = VersionState.Copying;
+          depotManager.SetActiveVersion(component.version);
+          component.State = VersionState.Active;
+          break;
+        case VersionState.Active:
+          if (component.version <= 249740) DateUtils.SetYears(-3);
+          SteamCommand.StartGame();
+          Thread.Sleep(5000);
+          if (component.version <= 249740) DateUtils.SetYears(+3);
+          break;
       }
     }
   }

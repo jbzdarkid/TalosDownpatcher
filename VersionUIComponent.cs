@@ -1,10 +1,8 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace TalosDownpatcher {
   public enum VersionState {
@@ -18,10 +16,8 @@ namespace TalosDownpatcher {
   };
 
   public class VersionUIComponent {
-    private Dispatcher dispatcher;
-    private DepotManager depotManager;
+    private readonly MainWindow mainWindow;
 
-    private readonly int version;
     private TextBox versionBox;
     private Rectangle downloadBar;
     private TextBox stateBox;
@@ -29,6 +25,7 @@ namespace TalosDownpatcher {
 
     public VersionUIComponent(int version, int yPos, MainWindow mainWindow) {
       this.version = version;
+      this.mainWindow = mainWindow;
 
       versionBox = new TextBox();
       versionBox.HorizontalAlignment = HorizontalAlignment.Left;
@@ -67,97 +64,60 @@ namespace TalosDownpatcher {
       actionButton.Click += Button_Click;
       actionButton.Margin = new Thickness(180, yPos, 0, 0);
       mainWindow.RootGrid.Children.Add(actionButton);
-
-      dispatcher = mainWindow.Dispatcher;
-      depotManager = mainWindow.depotManager;
     }
 
     public void SetDownloadFraction(double fractionDownloaded) {
-      downloadBar.Width = stateBox.Width * fractionDownloaded;
+      mainWindow.Dispatcher.Invoke(delegate {
+        downloadBar.Width = stateBox.Width * fractionDownloaded;
+      });
     }
 
-    public VersionState state {
+    public readonly int version;
+    private VersionState state;
+    public VersionState State {
       get {
         return state;
       }
       set {
         state = value;
-        stateBox.Text = value.ToString().Replace('_', ' ');
-
-        switch (value) {
-          case VersionState.Not_Downloaded:
-            actionButton.Content = "Download";
-            break;
-          case VersionState.Corrupt:
-            actionButton.Content = "Redownload";
-            break;
-          case VersionState.Download_Pending:
-          case VersionState.Downloading:
-            actionButton.Content = "Set Active";
-            actionButton.IsEnabled = false;
-            break;
-          case VersionState.Downloaded:
-            downloadBar.Width = 1;
-            actionButton.Content = "Set Active";
-            actionButton.IsEnabled = true;
-            break;
-          case VersionState.Copying:
-            actionButton.Content = "Play";
-            actionButton.IsEnabled = false;
-            break;
-          case VersionState.Active:
-            actionButton.Content = "Play";
-            actionButton.IsEnabled = true;
-            break;
-        }
+        mainWindow.Dispatcher.Invoke(delegate {
+          stateBox.Text = state.ToString().Replace('_', ' ');
+          switch (state) {
+            case VersionState.Not_Downloaded:
+              actionButton.Content = "Download";
+              break;
+            case VersionState.Corrupt:
+              actionButton.Content = "Redownload";
+              break;
+            case VersionState.Downloading:
+              Application.Current.MainWindow.Activate();
+              goto case VersionState.Download_Pending; // [[through]]
+            case VersionState.Download_Pending:
+              actionButton.Content = "Set Active";
+              actionButton.IsEnabled = false;
+              break;
+            case VersionState.Downloaded:
+              downloadBar.Width = 1;
+              actionButton.Content = "Set Active";
+              actionButton.IsEnabled = true;
+              break;
+            case VersionState.Copying:
+              actionButton.Content = "Play";
+              actionButton.IsEnabled = false;
+              break;
+            case VersionState.Active:
+              actionButton.Content = "Play";
+              actionButton.IsEnabled = true;
+              break;
+          }
+        });
       }
     }
 
-    private void Download() {
-      state = VersionState.Download_Pending;
-      depotManager.DownloadDepotsForVersion(this.version, delegate {
-        dispatcher.Invoke(() => {
-          state = VersionState.Downloading;
-          Application.Current.MainWindow.Activate();
-        });
-      }, delegate (double fractionDownloaded) {
-        dispatcher.Invoke(() => {
-          this.downloadBar.Width = stateBox.Width * fractionDownloaded;
-        });
-      });
-      state = VersionState.Downloaded;
-    }
-
-    private void SetActive() {
-      state = VersionState.Copying;
-      var version = depotManager.TrySetActiveVersion(this.version);
-      if (version != this.version) {
-        Console.WriteLine($"Version {version} is already running!");
-        return;
-      }
-      state = VersionState.Active;
-    }
-
-    public void LaunchGame() {
-      if (version <= 249740) DateUtils.SetYears(-3);
-      SteamCommand.StartGame();
-      Thread.Sleep(5000);
-      if (version <= 249740) DateUtils.SetYears(+3);
-    }
-    
     private void Button_Click(object sender, RoutedEventArgs e) {
-      switch (this.state) {
-        case VersionState.Not_Downloaded:
-        case VersionState.Corrupt:
-          new Thread(Download) { IsBackground = true }.Start();
-          break;
-        case VersionState.Downloaded:
-          new Thread(SetActive) { IsBackground = true }.Start();
-          break;
-        case VersionState.Active:
-          new Thread(LaunchGame) { IsBackground = true }.Start();
-          break;
-      }
+      var thread = new Thread(() => { mainWindow.OnClick(this); });
+      thread.IsBackground = true;
+      thread.Start();
     }
   }
 }

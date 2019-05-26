@@ -38,7 +38,7 @@ namespace TalosDownpatcher {
       }
     }
 
-    public int TrySetActiveVersion(int version) {
+    public void SetActiveVersion(int version) {
       lock (versionLock) {
         if (activeVersion == 0) {
           activeVersion = version;
@@ -54,7 +54,6 @@ namespace TalosDownpatcher {
           CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
           File.WriteAllText(activeVersionFile, activeVersion.ToString());
         }
-        return activeVersion;
       }
     }
 
