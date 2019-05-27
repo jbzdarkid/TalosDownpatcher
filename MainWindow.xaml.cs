@@ -49,7 +49,8 @@ namespace TalosDownpatcher {
           component.State = VersionState.Downloaded;
           break;
         case VersionState.Downloaded:
-          uiComponents[depotManager.GetActiveVersion()].State = VersionState.Downloaded;
+          int activeVersion = depotManager.GetActiveVersion();
+          if (activeVersion > 0) uiComponents[activeVersion].State = VersionState.Downloaded;
           component.State = VersionState.Copying;
           depotManager.SetActiveVersion(component.version);
           component.State = VersionState.Active;
