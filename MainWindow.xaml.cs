@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
 // TODO: Editor -- this is Apple's problem to solve.
+// TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it
+// TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
+// TODO: You can queue "set version active", which is maybe not good. Disable buttons / use cancel?
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -35,6 +38,7 @@ namespace TalosDownpatcher {
 
     // This function is always called on a background thread.
     public void OnClick(VersionUIComponent component) {
+      Console.WriteLine($"VersionUIComponent {component.version} clicked in state {component.State}");
       switch (component.State) {
         case VersionState.Not_Downloaded:
         case VersionState.Corrupt:

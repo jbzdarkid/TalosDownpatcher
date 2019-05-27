@@ -40,20 +40,19 @@ namespace TalosDownpatcher {
 
     public void SetActiveVersion(int version) {
       lock (versionLock) {
-        if (activeVersion == 0) {
-          activeVersion = version;
+        if (version == activeVersion) return;
+        activeVersion = version;
 
-          try {
-            // Delete files created in newer versions which interfere with older versions.
-            File.Delete($"{activeVersionLocation}/Content/Talos/All.dat");
-          } catch (DirectoryNotFoundException) { } // File doesn't exist
+        try {
+          // Delete files created in newer versions which interfere with older versions.
+          File.Delete($"{activeVersionLocation}/Content/Talos/All.dat");
+        } catch (DirectoryNotFoundException) { } // File doesn't exist
 
-          // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
-          CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
+        // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
+        CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
 
-          CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
-          File.WriteAllText(activeVersionFile, activeVersion.ToString());
-        }
+        CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
+        File.WriteAllText(activeVersionFile, activeVersion.ToString());
       }
     }
 
@@ -66,9 +65,11 @@ namespace TalosDownpatcher {
     public void DownloadDepotsForVersion(int version, Action onDownloadStart, Action<double> showDownloadProgress) {
       lock (downloadLock) {
         SteamCommand.OpenConsole();
-        foreach (var depot in ManifestData.depots) SteamCommand.DownloadDepot(depot, manifestData[version][depot].manifest);
+
+        // foreach (var depot in ManifestData.depots) SteamCommand.DownloadDepot(depot, manifestData[version][depot].manifest);
         onDownloadStart();
 
+        Thread.Sleep(5000); // Extra sleep to avoid a race condition where we check for depots before they're actually cleared.
         double downloadFraction = 0.0;
         while (downloadFraction < 1.0) {
           Thread.Sleep(1000);
