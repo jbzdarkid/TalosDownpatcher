@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -66,7 +66,7 @@ namespace TalosDownpatcher {
       lock (downloadLock) {
         SteamCommand.OpenConsole();
 
-        // foreach (var depot in ManifestData.depots) SteamCommand.DownloadDepot(depot, manifestData[version][depot].manifest);
+        foreach (var depot in ManifestData.depots) SteamCommand.DownloadDepot(depot, manifestData[version][depot].manifest);
         onDownloadStart();
 
         Thread.Sleep(5000); // Extra sleep to avoid a race condition where we check for depots before they're actually cleared.

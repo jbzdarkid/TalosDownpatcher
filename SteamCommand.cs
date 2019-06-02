@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Threading;
 using WindowsInput;
 using WindowsInput.Native;
@@ -21,6 +21,11 @@ namespace TalosDownpatcher {
 
     public static void StartGame() {
       Process.Start($"steam://run/{GAME_ID}");
+
+      // Wait for talos to launch before returning
+      while (Process.GetProcessesByName("talos.exe").Length == 0) {
+        Thread.Sleep(1000);
+      }
     }
   }
 }

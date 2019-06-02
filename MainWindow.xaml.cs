@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 // TODO: Editor -- this is Apple's problem to solve.
@@ -50,16 +51,22 @@ namespace TalosDownpatcher {
           break;
         case VersionState.Downloaded:
           int activeVersion = depotManager.GetActiveVersion();
-          if (activeVersion > 0) uiComponents[activeVersion].State = VersionState.Downloaded;
+          if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
           component.State = VersionState.Copying;
           depotManager.SetActiveVersion(component.version);
           component.State = VersionState.Active;
           break;
         case VersionState.Active:
-          if (component.version <= 249740) DateUtils.SetYears(-3);
-          SteamCommand.StartGame();
-          Thread.Sleep(5000);
-          if (component.version <= 249740) DateUtils.SetYears(+3);
+          if (component.version <= 249740) {
+            // Launch a separate, elevated process to change the date
+            var processPath = Process.GetCurrentProcess().MainModule.FileName;
+            Process.Start(new ProcessStartInfo(processPath) {
+              Verb = "runas",
+              Arguments = "LaunchOldVersion",
+            });
+          } else {
+            SteamCommand.StartGame();
+          }
           break;
       }
     }
