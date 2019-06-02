@@ -43,10 +43,10 @@ namespace TalosDownpatcher {
         if (version == activeVersion) return;
         activeVersion = version;
 
+        // Clean target folder before copying
         try {
-          // Delete files created in newer versions which interfere with older versions.
-          File.Delete($"{activeVersionLocation}/Content/Talos/All.dat");
-        } catch (DirectoryNotFoundException) { } // File doesn't exist
+          Directory.Delete(activeVersionLocation, true);
+        } catch (DirectoryNotFoundException) { }
 
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
         CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");

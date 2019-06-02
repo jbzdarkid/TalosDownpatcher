@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
 using System.Windows;
 // TODO: Editor -- this is Apple's problem to solve.
 // TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it

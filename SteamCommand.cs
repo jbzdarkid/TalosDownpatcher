@@ -5,9 +5,8 @@ using WindowsInput.Native;
 
 namespace TalosDownpatcher {
   public static class SteamCommand {
-
     public static readonly int GAME_ID = 257510;
-    private static InputSimulator sim = new InputSimulator();
+    private static readonly InputSimulator sim = new InputSimulator();
 
     public static void OpenConsole() {
       Process.Start($"steam://nav/console");
@@ -22,8 +21,12 @@ namespace TalosDownpatcher {
     public static void StartGame() {
       Process.Start($"steam://run/{GAME_ID}");
 
-      // Wait for talos to launch before returning
-      while (Process.GetProcessesByName("talos.exe").Length == 0) {
+      // Wait for talos to launch (60s max) before returning
+      for (var i=0; i<60; i++) {
+        foreach (var process in Process.GetProcesses()) {
+          if (process.ProcessName == "Talos") return;
+        }
+
         Thread.Sleep(1000);
       }
     }

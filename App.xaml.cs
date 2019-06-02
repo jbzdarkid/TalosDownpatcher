@@ -8,8 +8,7 @@ namespace TalosDownpatcher {
         SteamCommand.StartGame();
         DateUtils.SetYears(+3);
 
-        // Shutdown();
-        while (true) { }
+        Shutdown();
       }
     }
   }
