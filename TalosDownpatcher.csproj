@@ -110,9 +110,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Talos_1.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="version_icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
