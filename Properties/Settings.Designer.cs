@@ -25,7 +25,7 @@ namespace TalosDownpatcher.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Talos Principle")]
         public string activeVersionLocation {
             get {
                 return ((string)(this["activeVersionLocation"]));
@@ -37,13 +37,37 @@ namespace TalosDownpatcher.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Talos Principle Old Versions")]
         public string oldVersionLocation {
             get {
                 return ((string)(this["oldVersionLocation"]));
             }
             set {
                 this["oldVersionLocation"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\Steam\\steamapps\\content\\app_257510")]
+        public string depotLocation {
+            get {
+                return ((string)(this["depotLocation"]));
+            }
+            set {
+                this["depotLocation"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int activeVersion {
+            get {
+                return ((int)(this["activeVersion"]));
+            }
+            set {
+                this["activeVersion"] = value;
             }
         }
     }

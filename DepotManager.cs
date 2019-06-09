@@ -1,44 +1,20 @@
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    private readonly Dictionary<int, Dictionary<int, Datum>> manifestData;
-
-    private readonly string steamapps;
-    private readonly string activeVersionLocation;
-    private readonly string oldVersionLocation;
-    private readonly string depotLocation;
-    private readonly string activeVersionFile;
+    private readonly Dictionary<int, Dictionary<int, Datum>> manifestData = ManifestData.GetData();
 
     private static readonly object downloadLock = new object();
     private static readonly object versionLock = new object();
     private int activeVersion;
 
-    public DepotManager() {
-      manifestData = ManifestData.GetData();
-      steamapps = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", @"C:\Program Files (x86)\Steam") + "/steamapps";
-      activeVersionLocation = $"{steamapps}/common/The Talos Principle";
-      oldVersionLocation = $"{steamapps}/common/The Talos Principle Old Versions";
-      depotLocation = $"{steamapps}/content/app_257510";
-      activeVersionFile = $"{activeVersionLocation}/active_version.txt";
-
-      lock (versionLock) {
-        activeVersion = 0;
-        if (File.Exists(activeVersionFile)) {
-          using (var file = File.OpenText(activeVersionFile)) {
-            lock (versionLock) {
-              activeVersion = int.Parse(file.ReadLine());
-            }
-          }
-        }
-      }
-    }
-
     public void SetActiveVersion(int version) {
+      string activeVersionLocation = Settings.Default.activeVersionLocation;
+      string oldVersionLocation = Settings.Default.oldVersionLocation;
       lock (versionLock) {
         if (version == activeVersion) return;
         activeVersion = version;
@@ -52,17 +28,19 @@ namespace TalosDownpatcher {
         CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
 
         CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
-        File.WriteAllText(activeVersionFile, activeVersion.ToString());
+        Settings.Default.activeVersion = activeVersion;
       }
     }
 
     public int GetActiveVersion() {
       lock (versionLock) {
-        return activeVersion;
+        return Settings.Default.activeVersion;
       }
     }
 
     public void DownloadDepotsForVersion(int version, Action onDownloadStart, Action<double> showDownloadProgress) {
+      string oldVersionLocation = Settings.Default.oldVersionLocation;
+      string depotLocation = Settings.Default.depotLocation;
       lock (downloadLock) {
         SteamCommand.OpenConsole();
 
@@ -84,6 +62,8 @@ namespace TalosDownpatcher {
     }
 
     public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
+      string oldVersionLocation = Settings.Default.oldVersionLocation;
+      string depotLocation = Settings.Default.depotLocation;
       long expectedSize = 0;
       foreach (var depot in ManifestData.depots) {
         expectedSize += manifestData[version][depot].size;

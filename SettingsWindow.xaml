@@ -11,6 +11,6 @@
     <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="120,4,0,0" Name="ActiveBox" Height="20" Width="500"/>
     <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="140,29,0,0" Name="InactiveBox" Height="20" Width="480"/>
     <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,55,0,0" Content="Restore Defaults" Click="ButtonDefault_Click"/>
-    <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="590,55,0,0" Content="Save" Click="ButtonSave_Click"/>
+    <Button VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,55,5,0" Content="Save and Close" Click="ButtonSave_Click"/>
   </Grid>
 </Window>

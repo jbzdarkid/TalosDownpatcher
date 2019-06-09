@@ -12,18 +12,29 @@ namespace TalosDownpatcher {
       InactiveBox.Text = settings.oldVersionLocation;
     }
 
+    private bool IsValidPath(string potentialPath) {
+      if (string.IsNullOrWhiteSpace(potentialPath)) return false;
+      var dir = new DirectoryInfo(potentialPath);
+      return dir.Exists;
+    }
+
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
-      if (new DirectoryInfo(ActiveBox.Text).Exists) {
+      if (IsValidPath(ActiveBox.Text)) {
         settings.activeVersionLocation = ActiveBox.Text;
+        var steamapps = new DirectoryInfo(ActiveBox.Text).Parent.Parent;
+        settings.depotLocation = $"{steamapps}/content/app_25710";
       }
-      if (new DirectoryInfo(InactiveBox.Text).Exists) {
+      if (IsValidPath(InactiveBox.Text)) {
         settings.oldVersionLocation = InactiveBox.Text;
       }
       settings.Save(); // Writes to disk
+      Close();
     }
 
+    // Restores default settings without saving -- user must explicitly 'save and close'
     private void ButtonDefault_Click(object sender, RoutedEventArgs e) {
-      settings.Reset(); // TODO: Does this modify on-disk data? Ideally not, that should only happen when we save.
+      ActiveBox.Text = settings.Properties["activeVersionLocation"].DefaultValue as string;
+      InactiveBox.Text = settings.Properties["oldVersionLocation"].DefaultValue as string;
     }
   }
 }
