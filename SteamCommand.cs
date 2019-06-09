@@ -19,7 +19,7 @@ namespace TalosDownpatcher {
     }
 
     public static void StartGame() {
-      Process.Start($"steam://run/{GAME_ID}");
+      Process.Start($"steam://rungameid/{GAME_ID}");
 
       // Wait for talos to launch (60s max) before returning
       for (var i=0; i<60; i++) {

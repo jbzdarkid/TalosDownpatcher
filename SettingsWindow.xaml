@@ -1,0 +1,16 @@
+﻿<Window x:Class="TalosDownpatcher.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Settings" Height="120" Width="640">
+  <Grid Margin="0,0,0,0">
+    <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0" Content="Talos Install Location"/>
+    <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,25,0,0" Content="Inactive Version Location"/>
+    <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="120,4,0,0" Name="ActiveBox" Height="20" Width="500"/>
+    <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="140,29,0,0" Name="InactiveBox" Height="20" Width="480"/>
+    <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,55,0,0" Content="Restore Defaults" Click="ButtonDefault_Click"/>
+    <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="590,55,0,0" Content="Save" Click="ButtonSave_Click"/>
+  </Grid>
+</Window>

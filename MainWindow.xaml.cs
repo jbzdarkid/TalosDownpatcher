@@ -69,5 +69,9 @@ namespace TalosDownpatcher {
           break;
       }
     }
+
+    private void ButtonSettings_Click(object sender, RoutedEventArgs e) {
+      new SettingsWindow().Show();
+    }
   }
 }
