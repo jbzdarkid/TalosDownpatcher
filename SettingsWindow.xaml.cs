@@ -21,8 +21,6 @@ namespace TalosDownpatcher {
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
       if (IsValidPath(ActiveBox.Text)) {
         settings.activeVersionLocation = ActiveBox.Text;
-        var steamapps = new DirectoryInfo(ActiveBox.Text).Parent.Parent;
-        settings.depotLocation = $"{steamapps}/content/app_25710";
       }
       if (IsValidPath(InactiveBox.Text)) {
         settings.oldVersionLocation = InactiveBox.Text;

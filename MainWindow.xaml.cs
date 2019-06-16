@@ -7,6 +7,11 @@ using System.Windows;
 // TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
 // TODO: You can queue "set version active", which is maybe not good. Disable buttons / use cancel?
 
+// TODO: Clear depot folder after download if limted space (setting?)
+// TODO: Ensure depot drive has sufficient space before starting
+// TODO: Save window positions (don't worry about maximize)
+// Actually, can I prevent maximize?
+
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
     public DepotManager depotManager = new DepotManager();

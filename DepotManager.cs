@@ -1,16 +1,29 @@
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Windows;
 using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public class DepotManager {
     private readonly Dictionary<int, Dictionary<int, Datum>> manifestData = ManifestData.GetData();
 
+    private readonly string depotLocation;
     private static readonly object downloadLock = new object();
     private static readonly object versionLock = new object();
     private int activeVersion;
+
+    public DepotManager() {
+      string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
+      depotLocation = $"{steamInstall}/steamapps/content/app_257510";
+      foreach (DriveInfo drive in DriveInfo.GetDrives()) {
+
+        var k = drive.TotalFreeSpace;
+      }
+
+    }
 
     public void SetActiveVersion(int version) {
       string activeVersionLocation = Settings.Default.activeVersionLocation;
@@ -39,8 +52,14 @@ namespace TalosDownpatcher {
     }
 
     public void DownloadDepotsForVersion(int version, Action onDownloadStart, Action<double> showDownloadProgress) {
+      var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
+      drive = new DriveInfo("E:/");
+      if (!drive.IsReady) {
+        MessageBox.Show("Error Message", "Error Title");
+        return;
+      }
+
       string oldVersionLocation = Settings.Default.oldVersionLocation;
-      string depotLocation = Settings.Default.depotLocation;
       lock (downloadLock) {
         SteamCommand.OpenConsole();
 
@@ -63,7 +82,6 @@ namespace TalosDownpatcher {
 
     public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
       string oldVersionLocation = Settings.Default.oldVersionLocation;
-      string depotLocation = Settings.Default.depotLocation;
       long expectedSize = 0;
       foreach (var depot in ManifestData.depots) {
         expectedSize += manifestData[version][depot].size;

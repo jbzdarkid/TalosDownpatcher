@@ -8,9 +8,6 @@
     <Setting Name="oldVersionLocation" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\Steam\steamapps\common\The Talos Principle Old Versions</Value>
     </Setting>
-    <Setting Name="depotLocation" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Program Files (x86)\Steam\steamapps\content\app_257510</Value>
-    </Setting>
     <Setting Name="activeVersion" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
