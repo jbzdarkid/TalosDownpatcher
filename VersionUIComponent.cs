@@ -115,7 +115,7 @@ namespace TalosDownpatcher {
     }
 
     private void Button_Click(object sender, RoutedEventArgs e) {
-      var thread = new Thread(() => { mainWindow.OnClick(this); });
+      var thread = new Thread(() => { mainWindow.VersionButton_OnClick(this); });
       thread.IsBackground = true;
       thread.Start();
     }

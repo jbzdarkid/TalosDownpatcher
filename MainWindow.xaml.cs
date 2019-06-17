@@ -1,21 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
+using TalosDownpatcher.Properties;
+
 // TODO: Editor -- this is Apple's problem to solve.
 // TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it
 // TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
 // TODO: You can queue "set version active", which is maybe not good. Disable buttons / use cancel?
 
-// TODO: Clear depot folder after download if limted space (setting?)
-// TODO: Ensure depot drive has sufficient space before starting
-// TODO: Save window positions (don't worry about maximize)
-// Actually, can I prevent maximize?
-
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
     public DepotManager depotManager = new DepotManager();
     private Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
+    private SettingsWindow settingsWindow = null;
 
     public MainWindow() {
       InitializeComponent();
@@ -42,7 +41,7 @@ namespace TalosDownpatcher {
     }
 
     // This function is always called on a background thread.
-    public void OnClick(VersionUIComponent component) {
+    public void VersionButton_OnClick(VersionUIComponent component) {
       Console.WriteLine($"VersionUIComponent {component.version} clicked in state {component.State}");
       switch (component.State) {
         case VersionState.Not_Downloaded:
@@ -75,8 +74,17 @@ namespace TalosDownpatcher {
       }
     }
 
-    private void ButtonSettings_Click(object sender, RoutedEventArgs e) {
-      new SettingsWindow().Show();
+    private void SettingsButton_OnClick(object sender, RoutedEventArgs e) {
+      if (settingsWindow == null || !settingsWindow.IsLoaded) {
+        settingsWindow = new SettingsWindow();
+      }
+      settingsWindow.Show();
+      settingsWindow.Activate();
+    }
+
+    protected override void OnClosing(CancelEventArgs e) {
+      settingsWindow.Close();
+      base.OnClosing(e);
     }
   }
 }

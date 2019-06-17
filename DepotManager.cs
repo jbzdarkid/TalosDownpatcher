@@ -18,11 +18,6 @@ namespace TalosDownpatcher {
     public DepotManager() {
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
       depotLocation = $"{steamInstall}/steamapps/content/app_257510";
-      foreach (DriveInfo drive in DriveInfo.GetDrives()) {
-
-        var k = drive.TotalFreeSpace;
-      }
-
     }
 
     public void SetActiveVersion(int version) {
@@ -53,9 +48,16 @@ namespace TalosDownpatcher {
 
     public void DownloadDepotsForVersion(int version, Action onDownloadStart, Action<double> showDownloadProgress) {
       var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
-      drive = new DriveInfo("E:/");
       if (!drive.IsReady) {
-        MessageBox.Show("Error Message", "Error Title");
+        MessageBox.Show($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
+        return;
+      }
+      double totalDownloadSize = GetTotalDownloadSize(version);
+      long freeSpace = drive.TotalFreeSpace;
+      if (drive.TotalFreeSpace < totalDownloadSize) {
+        MessageBox.Show($@"Steam install location is in drive {drive.Name}
+has {Math.Round(freeSpace / 1000000000.0, 1)} GB of free space
+but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not enough space");
         return;
       }
 
@@ -77,15 +79,15 @@ namespace TalosDownpatcher {
         foreach (var depot in ManifestData.depots) {
           CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
         }
+        if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
+          // If we are low on space, clear the download directory.
+          Directory.Delete(depotLocation, true);
+        }
       }
     }
 
     public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
       string oldVersionLocation = Settings.Default.oldVersionLocation;
-      long expectedSize = 0;
-      foreach (var depot in ManifestData.depots) {
-        expectedSize += manifestData[version][depot].size;
-      }
 
       // @Performance: If I need to, I can compute number of files downloaded instead of folder size first.
       long actualSize = 0;
@@ -96,7 +98,15 @@ namespace TalosDownpatcher {
       }
 
       // If this metric is not accurate, I can potentially improve it using the number of files.
-      return actualSize / (double)expectedSize;
+      return actualSize / GetTotalDownloadSize(version);
+    }
+
+    private double GetTotalDownloadSize(int version) {
+      double totalDownloadSize = 0;
+      foreach (var depot in ManifestData.depots) {
+        totalDownloadSize += manifestData[version][depot].size;
+      }
+      return totalDownloadSize;
     }
 
     private static long GetFolderSize(string folder) {

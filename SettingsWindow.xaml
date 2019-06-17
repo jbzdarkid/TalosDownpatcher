@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Settings" Height="120" Width="640">
+        Title="Settings" Top="50" Left="385" Height="120" Width="640">
   <Grid Margin="0,0,0,0">
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0" Content="Talos Install Location"/>
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,25,0,0" Content="Inactive Version Location"/>
