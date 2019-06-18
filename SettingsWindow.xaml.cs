@@ -12,19 +12,19 @@ namespace TalosDownpatcher {
       InactiveBox.Text = settings.oldVersionLocation;
     }
 
-    private bool IsValidPath(string potentialPath) {
-      if (string.IsNullOrWhiteSpace(potentialPath)) return false;
-      var dir = new DirectoryInfo(potentialPath);
-      return dir.Exists;
-    }
-
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
-      if (IsValidPath(ActiveBox.Text)) {
+      if (!string.IsNullOrWhiteSpace(ActiveBox.Text)) {
+        var dir = new DirectoryInfo(ActiveBox.Text);
+        if (!dir.Exists) dir.Create();
         settings.activeVersionLocation = ActiveBox.Text;
       }
-      if (IsValidPath(InactiveBox.Text)) {
+
+      if (!string.IsNullOrWhiteSpace(InactiveBox.Text)) {
+        var dir = new DirectoryInfo(InactiveBox.Text);
+        if (!dir.Exists) dir.Create();
         settings.oldVersionLocation = InactiveBox.Text;
       }
+
       settings.Save(); // Writes to disk
       Close();
     }
