@@ -9,6 +9,7 @@ using TalosDownpatcher.Properties;
 // TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it
 // TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
 // TODO: You can queue "set version active", which is maybe not good. Disable buttons / use cancel?
+// TODO: Hide useless versions (and have a setting to show)
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -18,14 +19,13 @@ namespace TalosDownpatcher {
 
     public MainWindow() {
       InitializeComponent();
-      int activeVersion = depotManager.GetActiveVersion();
       for (int i = 0; i < ManifestData.versions.Count; i++) {
         int version = ManifestData.versions[i];
         var uiComponent = new VersionUIComponent(version, 30 + 20 * i, this);
 
         double downloadFraction = depotManager.GetDownloadFraction(version, false);
         if (downloadFraction == 1.0) {
-          if (ManifestData.versions[i] == activeVersion) {
+          if (ManifestData.versions[i] == Settings.Default.activeVersion) {
             uiComponent.State = VersionState.Active;
           } else {
             uiComponent.State = VersionState.Downloaded;
@@ -53,7 +53,7 @@ namespace TalosDownpatcher {
           component.State = VersionState.Downloaded;
           break;
         case VersionState.Downloaded:
-          int activeVersion = depotManager.GetActiveVersion();
+          int activeVersion = Settings.Default.activeVersion;
           if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
           component.State = VersionState.Copying;
           depotManager.SetActiveVersion(component.version);
@@ -83,7 +83,7 @@ namespace TalosDownpatcher {
     }
 
     protected override void OnClosing(CancelEventArgs e) {
-      settingsWindow.Close();
+      if (settingsWindow != null) settingsWindow.Close();
       base.OnClosing(e);
     }
   }

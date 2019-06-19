@@ -13,7 +13,6 @@ namespace TalosDownpatcher {
     private readonly string depotLocation;
     private static readonly object downloadLock = new object();
     private static readonly object versionLock = new object();
-    private int activeVersion;
 
     public DepotManager() {
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
@@ -24,8 +23,7 @@ namespace TalosDownpatcher {
       string activeVersionLocation = Settings.Default.activeVersionLocation;
       string oldVersionLocation = Settings.Default.oldVersionLocation;
       lock (versionLock) {
-        if (version == activeVersion) return;
-        activeVersion = version;
+        if (version == Settings.Default.activeVersion) return;
 
         // Clean target folder before copying
         try {
@@ -36,13 +34,8 @@ namespace TalosDownpatcher {
         CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
 
         CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
-        Settings.Default.activeVersion = activeVersion;
-      }
-    }
-
-    public int GetActiveVersion() {
-      lock (versionLock) {
-        return Settings.Default.activeVersion;
+        Settings.Default.activeVersion = version;
+        Settings.Default.Save(); // Writes to disk
       }
     }
 
