@@ -9,23 +9,31 @@ using TalosDownpatcher.Properties;
 // TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it
 // TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
 // TODO: You can queue "set version active", which is maybe not good. Disable buttons / use cancel?
-// TODO: Hide useless versions (and have a setting to show)
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
     public DepotManager depotManager = new DepotManager();
-    private Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
+    private Dictionary<int, VersionUIComponent> uiComponents = null;
     private SettingsWindow settingsWindow = null;
 
     public MainWindow() {
       InitializeComponent();
-      for (int i = 0; i < ManifestData.versions.Count; i++) {
-        int version = ManifestData.versions[i];
-        var uiComponent = new VersionUIComponent(version, 30 + 20 * i, this);
+      LoadVersions();
+    }
+
+    public void LoadVersions() {
+      var versions = ManifestData.defaultVersions;
+      if (Settings.Default.showAllVersions) versions.AddRange(ManifestData.extraVersions);
+      this.Height = 50 + versions.Count * 20;
+      this.uiComponents = new Dictionary<int, VersionUIComponent>();
+
+      for (int i = 0; i < versions.Count; i++) {
+        int version = versions[i];
+        var uiComponent = new VersionUIComponent(version, 20 * i, this);
 
         double downloadFraction = depotManager.GetDownloadFraction(version, false);
         if (downloadFraction == 1.0) {
-          if (ManifestData.versions[i] == Settings.Default.activeVersion) {
+          if (version == Settings.Default.activeVersion) {
             uiComponent.State = VersionState.Active;
           } else {
             uiComponent.State = VersionState.Downloaded;

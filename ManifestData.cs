@@ -13,8 +13,10 @@ namespace TalosDownpatcher {
   }
 
   public class ManifestData {
-    public static readonly List<int> versions = new List<int> {
-      440323, 326589, 301136, 244371, // Common versions listed first for convenience.
+    public static readonly List<int> defaultVersions = new List<int> {
+      440323, 326589, 301136, 244371
+    };
+    public static readonly List<int> extraVersions = new List<int> {
       429074, 426014, 424910, 300763, 293384, 291145, 284152, 277544,
       269335, 267252, 264510, 260924, 258375, 252786, 250756, 249913,
       249740, 248828, 248139, 246379, 243520, 226087, 224995, 224531,
@@ -28,9 +30,8 @@ namespace TalosDownpatcher {
 
     public static Dictionary<int, Dictionary<int, Datum>> GetData() {
       var data = new Dictionary<int, Dictionary<int, Datum>>();
-      foreach (var version in versions) {
-        data[version] = new Dictionary<int, Datum>();
-      }
+      foreach (var version in defaultVersions) data[version] = new Dictionary<int, Datum>();
+      foreach (var version in extraVersions) data[version] = new Dictionary<int, Datum>();
 
       data[440323][257511] = new Datum(0799213806328220919, 2, 66117856);
       data[429074][257511] = new Datum(8159846362257674313, 2, 66084984);

@@ -58,5 +58,17 @@ namespace TalosDownpatcher.Properties {
                 this["activeVersion"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool showAllVersions {
+            get {
+                return ((bool)(this["showAllVersions"]));
+            }
+            set {
+                this["showAllVersions"] = value;
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ namespace TalosDownpatcher {
       InitializeComponent();
       ActiveBox.Text = settings.activeVersionLocation;
       InactiveBox.Text = settings.oldVersionLocation;
+      AllVersionsCheckbox.IsChecked = settings.showAllVersions;
     }
 
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
@@ -24,6 +25,9 @@ namespace TalosDownpatcher {
         if (!dir.Exists) dir.Create();
         settings.oldVersionLocation = InactiveBox.Text;
       }
+
+      settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;
+      ((MainWindow)Application.Current.MainWindow).LoadVersions();
 
       settings.Save(); // Writes to disk
       Close();
