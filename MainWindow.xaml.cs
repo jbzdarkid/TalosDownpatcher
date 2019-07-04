@@ -69,9 +69,8 @@ namespace TalosDownpatcher {
           int activeVersion = Settings.Default.activeVersion;
           if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
           component.State = VersionState.Copying;
-          depotManager.SetActiveVersion(component.version); // Note that this action may fail, in which case the active version will not change 
-          component.State = VersionState.Downloaded;
-          if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Active;
+          bool succeeded = depotManager.SetActiveVersion(component.version);
+          component.State = succeeded ? VersionState.Active : VersionState.Downloaded; // If we fail, no versions are active.
           break;
         case VersionState.Active:
           if (component.version <= 249740) {

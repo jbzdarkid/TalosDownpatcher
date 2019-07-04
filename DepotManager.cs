@@ -19,11 +19,11 @@ namespace TalosDownpatcher {
       depotLocation = $"{steamInstall}/steamapps/content/app_257510";
     }
 
-    public void SetActiveVersion(int version) {
+    public bool SetActiveVersion(int version) {
       string activeVersionLocation = Settings.Default.activeVersionLocation;
       string oldVersionLocation = Settings.Default.oldVersionLocation;
       lock (versionLock) {
-        if (version == Settings.Default.activeVersion) return;
+        if (version == Settings.Default.activeVersion) return true;
 
         // Clean target folder before copying
         try {
@@ -32,7 +32,8 @@ namespace TalosDownpatcher {
           // Folder already deleted
         } catch (UnauthorizedAccessException) {
           MessageBox.Show($"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.", "Folder in use");
-          return;
+          Settings.Default.activeVersion = 0; // Reset active version, since we're now in a bad state
+          return false;
         }
 
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
@@ -41,6 +42,7 @@ namespace TalosDownpatcher {
         CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
         Settings.Default.activeVersion = version;
         Settings.Default.Save(); // Writes to disk
+        return true;
       }
     }
 
