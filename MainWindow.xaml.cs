@@ -11,7 +11,6 @@ using TalosDownpatcher.Properties;
 // TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
 // TODO: Confirm that "set version active" actually resets the state of the other active item.
-// TODO: "Show all versions" should continue to use numeric sorting. If you're showing all, it's because you want all.
 // TODO: Add states for "Saving" (copying to download) and "Cancelling"
 
 namespace TalosDownpatcher {
@@ -26,8 +25,12 @@ namespace TalosDownpatcher {
     }
 
     public void LoadVersions() {
-      var versions = new List<int>(ManifestData.defaultVersions);
-      if (Settings.Default.showAllVersions) versions.AddRange(ManifestData.extraVersions);
+      List<int> versions;
+      if (Settings.Default.showAllVersions) {
+        versions = ManifestData.allVersions;
+      } else {
+        versions = ManifestData.commonVersions;
+      }
       this.Height = 50 + versions.Count * 20;
       foreach (var uiComponent in this.uiComponents.Values) uiComponent.Dispose();
       this.uiComponents.Clear();
