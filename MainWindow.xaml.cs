@@ -6,9 +6,13 @@ using System.Windows;
 using TalosDownpatcher.Properties;
 
 // TODO: Editor -- this is Apple's problem to solve.
+// TODO: Gehenna -- this is someone else's problem to solve.
 // TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it
 // TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
-// TODO: You can queue "set version active", which is maybe not good. Disable buttons / use cancel?
+// TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
+// TODO: Confirm that "set version active" actually resets the state of the other active item.
+// TODO: "Show all versions" should continue to use numeric sorting. If you're showing all, it's because you want all.
+// TODO: Add states for "Saving" (copying to download) and "Cancelling"
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -65,8 +69,9 @@ namespace TalosDownpatcher {
           int activeVersion = Settings.Default.activeVersion;
           if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
           component.State = VersionState.Copying;
-          depotManager.SetActiveVersion(component.version);
-          component.State = VersionState.Active;
+          depotManager.SetActiveVersion(component.version); // Note that this action may fail, in which case the active version will not change 
+          component.State = VersionState.Downloaded;
+          if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Active;
           break;
         case VersionState.Active:
           if (component.version <= 249740) {

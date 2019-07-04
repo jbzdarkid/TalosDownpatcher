@@ -28,7 +28,12 @@ namespace TalosDownpatcher {
         // Clean target folder before copying
         try {
           Directory.Delete(activeVersionLocation, true);
-        } catch (DirectoryNotFoundException) { }
+        } catch (DirectoryNotFoundException) {
+          // Folder already deleted
+        } catch (UnauthorizedAccessException) {
+          MessageBox.Show($"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.", "Folder in use");
+          return;
+        }
 
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
         CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
