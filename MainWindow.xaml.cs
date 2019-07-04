@@ -13,7 +13,7 @@ using TalosDownpatcher.Properties;
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
     public DepotManager depotManager = new DepotManager();
-    private Dictionary<int, VersionUIComponent> uiComponents = null;
+    private Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
 
     public MainWindow() {
@@ -22,10 +22,11 @@ namespace TalosDownpatcher {
     }
 
     public void LoadVersions() {
-      var versions = ManifestData.defaultVersions;
+      var versions = new List<int>(ManifestData.defaultVersions);
       if (Settings.Default.showAllVersions) versions.AddRange(ManifestData.extraVersions);
       this.Height = 50 + versions.Count * 20;
-      this.uiComponents = new Dictionary<int, VersionUIComponent>();
+      foreach (var uiComponent in this.uiComponents.Values) uiComponent.Dispose();
+      this.uiComponents.Clear();
 
       for (int i = 0; i < versions.Count; i++) {
         int version = versions[i];

@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,7 +16,7 @@ namespace TalosDownpatcher {
     Active,
   };
 
-  public class VersionUIComponent {
+  public class VersionUIComponent : IDisposable {
     private readonly MainWindow mainWindow;
 
     private TextBox versionBox;
@@ -119,5 +120,29 @@ namespace TalosDownpatcher {
       thread.IsBackground = true;
       thread.Start();
     }
+
+    #region IDisposable Support
+    private bool disposed = false; // To detect redundant calls
+
+    protected virtual void Dispose(bool disposing) {
+      if (disposed) return;
+      disposed = true;
+
+      if (disposing) {
+        mainWindow.RootGrid.Children.Remove(versionBox);
+        mainWindow.RootGrid.Children.Remove(downloadBar);
+        mainWindow.RootGrid.Children.Remove(stateBox);
+        mainWindow.RootGrid.Children.Remove(actionButton);
+        versionBox = null;
+        downloadBar = null;
+        stateBox = null;
+        actionButton = null;
+      }
+    }
+
+    public void Dispose() {
+      Dispose(true);
+    }
+    #endregion
   }
 }
