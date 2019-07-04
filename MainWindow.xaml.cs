@@ -85,9 +85,11 @@ namespace TalosDownpatcher {
     private void SettingsButton_OnClick(object sender, RoutedEventArgs e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
         settingsWindow = new SettingsWindow();
+        settingsWindow.Show();
+        settingsWindow.Activate();
+      } else {
+        settingsWindow.Close();
       }
-      settingsWindow.Show();
-      settingsWindow.Activate();
     }
 
     protected override void OnClosing(CancelEventArgs e) {
