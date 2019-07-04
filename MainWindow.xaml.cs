@@ -62,6 +62,9 @@ namespace TalosDownpatcher {
           component.State = VersionState.Download_Pending;
           depotManager.DownloadDepotsForVersion(component.version, delegate {
             component.State = VersionState.Downloading;
+            Dispatcher.Invoke(delegate {
+              Application.Current.MainWindow.Activate();
+            });
           }, component.SetDownloadFraction);
           component.State = VersionState.Downloaded;
           break;

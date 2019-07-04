@@ -11,6 +11,7 @@ namespace TalosDownpatcher {
     Corrupt,
     Download_Pending,
     Downloading,
+    Saving,
     Downloaded,
     Copying,
     Active,
@@ -91,8 +92,6 @@ namespace TalosDownpatcher {
               actionButton.Content = "Redownload";
               break;
             case VersionState.Downloading:
-              Application.Current.MainWindow.Activate();
-              goto case VersionState.Download_Pending; // [[through]]
             case VersionState.Download_Pending:
               actionButton.Content = "Set Active";
               actionButton.IsEnabled = false;
