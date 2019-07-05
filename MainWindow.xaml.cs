@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
 // TODO: Editor -- this is Apple's problem to solve.
 // TODO: Gehenna -- this is someone else's problem to solve.
-// TODO: Cancel download? There's a Thread.Abort(), but I need a nice way to wire it
-// TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
+// ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
 // TODO: Confirm that "set version active" actually resets the state of the other active item.
-// TODO: Add states for "Saving" (copying to download) and "Cancelling"
+
+// TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
+// TODO: Add states + impl for "Saving" (copying to download)
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -22,6 +24,7 @@ namespace TalosDownpatcher {
     public MainWindow() {
       InitializeComponent();
       LoadVersions();
+      dispatcher = this.Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
     public void LoadVersions() {
@@ -67,9 +70,7 @@ namespace TalosDownpatcher {
         case VersionState.Downloaded:
           int activeVersion = Settings.Default.activeVersion;
           if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
-          component.State = VersionState.Copying;
-          bool succeeded = depotManager.SetActiveVersion(component.version);
-          component.State = succeeded ? VersionState.Active : VersionState.Downloaded; // If we fail, no versions are active.
+          depotManager.SetActiveVersion(component);
           break;
         case VersionState.Active:
           if (component.version <= 249740) {
@@ -101,9 +102,10 @@ namespace TalosDownpatcher {
       base.OnClosing(e);
     }
 
+    private static Dispatcher dispatcher;
     public static void SetForeground() {
-      var mainWindow = (MainWindow)Application.Current.MainWindow;
-      mainWindow.Dispatcher.Invoke(delegate {
+      dispatcher.Invoke(delegate {
+        var mainWindow = (MainWindow)Application.Current.MainWindow;
         mainWindow.Activate();
       });
     }

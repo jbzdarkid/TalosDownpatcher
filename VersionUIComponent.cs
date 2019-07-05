@@ -13,6 +13,7 @@ namespace TalosDownpatcher {
     Downloading,
     Saving,
     Downloaded,
+    Copy_Pending,
     Copying,
     Active,
   };
@@ -68,7 +69,7 @@ namespace TalosDownpatcher {
       mainWindow.RootGrid.Children.Add(actionButton);
     }
 
-    public void SetDownloadFraction(double fractionDownloaded) {
+    public void SetProgress(double fractionDownloaded) {
       mainWindow.Dispatcher.Invoke(delegate {
         downloadBar.Width = stateBox.Width * fractionDownloaded;
       });
@@ -98,15 +99,17 @@ namespace TalosDownpatcher {
               actionButton.IsEnabled = false;
               break;
             case VersionState.Downloaded:
-              downloadBar.Width = 1;
+              SetProgress(0.0);
               actionButton.Content = "Set Active";
               actionButton.IsEnabled = true;
               break;
+            case VersionState.Copy_Pending:
             case VersionState.Copying:
               actionButton.Content = "Play";
               actionButton.IsEnabled = false;
               break;
             case VersionState.Active:
+              SetProgress(0.0);
               actionButton.Content = "Play";
               actionButton.IsEnabled = true;
               break;

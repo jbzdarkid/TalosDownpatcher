@@ -29,9 +29,23 @@ namespace TalosDownpatcher {
         257516, 257519, 257511, 257515
     };
 
-    public static Dictionary<int, Dictionary<int, Datum>> GetData() {
-      var data = new Dictionary<int, Dictionary<int, Datum>>();
-      foreach (var version in allVersions) data[version] = new Dictionary<int, Datum>();
+    private Dictionary<int, Dictionary<int, Datum>> data;
+
+    public Datum this[int version, int depot] {
+      get {
+        return this.data[version][depot];
+      }
+    }
+
+    public double GetTotalDownloadSize(int version) {
+      double totalDownloadSize = 0;
+      foreach (var depot in depots) totalDownloadSize += this[version, depot].size;
+      return totalDownloadSize;
+    }
+
+    public ManifestData() {
+      data = new Dictionary<int, Dictionary<int, Datum>>();
+      foreach (var version in allVersions) this.data[version] = new Dictionary<int, Datum>();
 
       data[440323][257511] = new Datum(0799213806328220919, 2, 66117856);
       data[429074][257511] = new Datum(8159846362257674313, 2, 66084984);
@@ -176,7 +190,6 @@ namespace TalosDownpatcher {
       data[220675][257519] = new Datum(4554990112195176406, 1, 1789447);
       data[220625][257519] = new Datum(1272083368566319066, 1, 1789447);
       data[220480][257519] = new Datum(2322040020544521685, 1, 1739595);
-      return data;
     }
   }
 }

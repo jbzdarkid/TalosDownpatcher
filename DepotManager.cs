@@ -1,6 +1,5 @@
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -8,41 +7,56 @@ using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    private readonly Dictionary<int, Dictionary<int, Datum>> manifestData = ManifestData.GetData();
+    private readonly ManifestData manifestData;
 
     private readonly string depotLocation;
     private static readonly object downloadLock = new object();
     private static readonly object versionLock = new object();
 
     public DepotManager() {
+      manifestData = new ManifestData();
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
       depotLocation = $"{steamInstall}/steamapps/content/app_257510";
     }
 
-    public bool SetActiveVersion(int version) {
+    public void SetActiveVersion(VersionUIComponent component) {
       string activeVersionLocation = Settings.Default.activeVersionLocation;
       string oldVersionLocation = Settings.Default.oldVersionLocation;
-      lock (versionLock) {
-        if (version == Settings.Default.activeVersion) return true;
 
-        // Clean target folder before copying
+      component.State = VersionState.Copy_Pending;
+      lock (versionLock) {
+        if (component.version == Settings.Default.activeVersion) {
+          component.State = VersionState.Active;
+          return;
+        }
+        component.State = VersionState.Copying;
+
+        // Carefully clean target folder before copying
         try {
-          Directory.Delete(activeVersionLocation, true);
+          throw new UnauthorizedAccessException(); // TODO
+          // Directory.Delete(activeVersionLocation, true);
         } catch (DirectoryNotFoundException) {
           // Folder already deleted
         } catch (UnauthorizedAccessException) {
           MessageBox.Show($"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.", "Folder in use");
+          component.State = VersionState.Downloaded;
           Settings.Default.activeVersion = 0; // Reset active version, since we're now in a bad state
-          return false;
+          Settings.Default.Save();
+          return;
         }
 
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
-        CopyAndOverwrite($"{oldVersionLocation}/{version}/Bin", $"{activeVersionLocation}/Bin/x64");
+        CopyAndOverwrite($"{oldVersionLocation}/{component.version}/Bin", $"{activeVersionLocation}/Bin/x64", delegate { });
 
-        CopyAndOverwrite($"{oldVersionLocation}/{version}", activeVersionLocation);
-        Settings.Default.activeVersion = version;
-        Settings.Default.Save(); // Writes to disk
-        return true;
+        double totalSize = manifestData.GetTotalDownloadSize(component.version);
+        double copied = 0.0;
+        CopyAndOverwrite($"{oldVersionLocation}/{component.version}", activeVersionLocation, delegate (double fileSize) {
+          copied += fileSize;
+          component.SetProgress(copied / totalSize);
+        });
+        component.State = VersionState.Active;
+        Settings.Default.activeVersion = component.version;
+        Settings.Default.Save();
       }
     }
 
@@ -53,7 +67,7 @@ namespace TalosDownpatcher {
         return;
       }
 
-      double totalDownloadSize = GetTotalDownloadSize(component.version);
+      double totalDownloadSize = manifestData.GetTotalDownloadSize(component.version);
       long freeSpace = drive.TotalFreeSpace;
       if (drive.TotalFreeSpace < totalDownloadSize) {
         MessageBox.Show($@"Steam install location is in drive {drive.Name}
@@ -68,7 +82,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         SteamCommand.OpenConsole();
 
         foreach (var depot in ManifestData.depots) {
-          SteamCommand.DownloadDepot(depot, manifestData[component.version][depot].manifest);
+          SteamCommand.DownloadDepot(depot, manifestData[component.version, depot].manifest);
         }
         MainWindow.SetForeground();
 
@@ -77,12 +91,16 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         while (downloadFraction < 1.0) {
           Thread.Sleep(1000);
           downloadFraction = GetDownloadFraction(component.version, true);
-          component.SetDownloadFraction(downloadFraction);
+          component.SetProgress(0.8 * downloadFraction); // 80% - Downloading
         }
         component.State = VersionState.Saving;
 
+        double copied = 0.0;
         foreach (var depot in ManifestData.depots) {
-          CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{Settings.Default.oldVersionLocation}/{component.version}");
+          CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{Settings.Default.oldVersionLocation}/{component.version}", delegate (double fileSize) {
+            copied += fileSize;
+            component.SetProgress(0.8 + (copied / totalDownloadSize));
+          });
         }
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
           // If we are low on space, clear the download directory.
@@ -104,15 +122,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       }
 
       // If this metric is not accurate, I can potentially improve it using the number of files.
-      return actualSize / GetTotalDownloadSize(version);
-    }
-
-    private double GetTotalDownloadSize(int version) {
-      double totalDownloadSize = 0;
-      foreach (var depot in ManifestData.depots) {
-        totalDownloadSize += manifestData[version][depot].size;
-      }
-      return totalDownloadSize;
+      return actualSize / manifestData.GetTotalDownloadSize(version);
     }
 
     private static long GetFolderSize(string folder) {
@@ -125,14 +135,17 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       return size;
     }
 
-    private static void CopyAndOverwrite(string srcFolder, string dstFolder) {
+    private static void CopyAndOverwrite(string srcFolder, string dstFolder, Action<double> onCopyFile) {
       var src = new DirectoryInfo(srcFolder);
       if (!src.Exists) return;
       var dst = new DirectoryInfo(dstFolder);
       if (!dst.Exists) Directory.CreateDirectory(dstFolder);
 
-      foreach (var dir in src.GetDirectories()) CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}");
-      foreach (var file in src.GetFiles()) File.Copy(file.FullName, $"{dst}/{file.Name}", true);
+      foreach (var dir in src.GetDirectories()) CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", onCopyFile);
+      foreach (var file in src.GetFiles()) {
+        File.Copy(file.FullName, $"{dst}/{file.Name}", true);
+        onCopyFile(file.Length);
+      }
     }
   }
 }
