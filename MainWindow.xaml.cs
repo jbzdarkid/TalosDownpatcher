@@ -62,14 +62,7 @@ namespace TalosDownpatcher {
       switch (component.State) {
         case VersionState.Not_Downloaded:
         case VersionState.Corrupt:
-          component.State = VersionState.Download_Pending;
-          depotManager.DownloadDepotsForVersion(component.version, delegate {
-            component.State = VersionState.Downloading;
-            Dispatcher.Invoke(delegate {
-              Application.Current.MainWindow.Activate();
-            });
-          }, component.SetDownloadFraction);
-          component.State = VersionState.Downloaded;
+          depotManager.DownloadDepots(component);
           break;
         case VersionState.Downloaded:
           int activeVersion = Settings.Default.activeVersion;
@@ -106,6 +99,13 @@ namespace TalosDownpatcher {
     protected override void OnClosing(CancelEventArgs e) {
       if (settingsWindow != null) settingsWindow.Close();
       base.OnClosing(e);
+    }
+
+    public static void SetForeground() {
+      var mainWindow = (MainWindow)Application.Current.MainWindow;
+      mainWindow.Dispatcher.Invoke(delegate {
+        mainWindow.Activate();
+      });
     }
   }
 }

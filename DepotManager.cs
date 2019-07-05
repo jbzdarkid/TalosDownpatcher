@@ -46,13 +46,14 @@ namespace TalosDownpatcher {
       }
     }
 
-    public void DownloadDepotsForVersion(int version, Action onDownloadStart, Action<double> showDownloadProgress) {
+    public void DownloadDepots(VersionUIComponent component) {
       var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
       if (!drive.IsReady) {
         MessageBox.Show($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
         return;
       }
-      double totalDownloadSize = GetTotalDownloadSize(version);
+
+      double totalDownloadSize = GetTotalDownloadSize(component.version);
       long freeSpace = drive.TotalFreeSpace;
       if (drive.TotalFreeSpace < totalDownloadSize) {
         MessageBox.Show($@"Steam install location is in drive {drive.Name}
@@ -61,29 +62,34 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         return;
       }
 
-      string oldVersionLocation = Settings.Default.oldVersionLocation;
+      component.State = VersionState.Download_Pending; // Pending until we lock
       lock (downloadLock) {
+        component.State = VersionState.Downloading;
         SteamCommand.OpenConsole();
 
-        foreach (var depot in ManifestData.depots) SteamCommand.DownloadDepot(depot, manifestData[version][depot].manifest);
-        onDownloadStart();
+        foreach (var depot in ManifestData.depots) {
+          SteamCommand.DownloadDepot(depot, manifestData[component.version][depot].manifest);
+        }
+        MainWindow.SetForeground();
 
         Thread.Sleep(5000); // Extra sleep to avoid a race condition where we check for depots before they're actually cleared.
         double downloadFraction = 0.0;
         while (downloadFraction < 1.0) {
           Thread.Sleep(1000);
-          downloadFraction = GetDownloadFraction(version, true);
-          showDownloadProgress(downloadFraction);
+          downloadFraction = GetDownloadFraction(component.version, true);
+          component.SetDownloadFraction(downloadFraction);
         }
+        component.State = VersionState.Saving;
 
         foreach (var depot in ManifestData.depots) {
-          CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{oldVersionLocation}/{version}");
+          CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{Settings.Default.oldVersionLocation}/{component.version}");
         }
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
           // If we are low on space, clear the download directory.
           Directory.Delete(depotLocation, true);
         }
       }
+      component.State = VersionState.Downloaded;
     }
 
     public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
