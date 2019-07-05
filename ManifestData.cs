@@ -33,7 +33,7 @@ namespace TalosDownpatcher {
 
     public Datum this[int version, int depot] {
       get {
-        return this.data[version][depot];
+        return data[version][depot];
       }
     }
 
@@ -45,7 +45,7 @@ namespace TalosDownpatcher {
 
     public ManifestData() {
       data = new Dictionary<int, Dictionary<int, Datum>>();
-      foreach (var version in allVersions) this.data[version] = new Dictionary<int, Datum>();
+      foreach (var version in allVersions) data[version] = new Dictionary<int, Datum>();
 
       data[440323][257511] = new Datum(0799213806328220919, 2, 66117856);
       data[429074][257511] = new Datum(8159846362257674313, 2, 66084984);

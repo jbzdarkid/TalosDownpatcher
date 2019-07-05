@@ -19,7 +19,7 @@ namespace TalosDownpatcher {
       depotLocation = $"{steamInstall}/steamapps/content/app_257510";
     }
 
-    public void SetActiveVersion(VersionUIComponent component) {
+    public void SetActiveVersion(VersionUIComponent component, Action onDownloadStart) {
       string activeVersionLocation = Settings.Default.activeVersionLocation;
       string oldVersionLocation = Settings.Default.oldVersionLocation;
 
@@ -30,11 +30,11 @@ namespace TalosDownpatcher {
           return;
         }
         component.State = VersionState.Copying;
+        onDownloadStart();
 
         // Carefully clean target folder before copying
         try {
-          throw new UnauthorizedAccessException(); // TODO
-          // Directory.Delete(activeVersionLocation, true);
+          Directory.Delete(activeVersionLocation, true);
         } catch (DirectoryNotFoundException) {
           // Folder already deleted
         } catch (UnauthorizedAccessException) {
@@ -55,6 +55,7 @@ namespace TalosDownpatcher {
           component.SetProgress(copied / totalSize);
         });
         component.State = VersionState.Active;
+
         Settings.Default.activeVersion = component.version;
         Settings.Default.Save();
       }
@@ -90,7 +91,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         double downloadFraction = 0.0;
         while (downloadFraction < 1.0) {
           Thread.Sleep(1000);
-          downloadFraction = GetDownloadFraction(component.version, true);
+          downloadFraction = GetDownloadFraction(component.version, Location.Depots);
           component.SetProgress(0.8 * downloadFraction); // 80% - Downloading
         }
         component.State = VersionState.Saving;
@@ -99,7 +100,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         foreach (var depot in ManifestData.depots) {
           CopyAndOverwrite($"{depotLocation}/depot_{depot}", $"{Settings.Default.oldVersionLocation}/{component.version}", delegate (double fileSize) {
             copied += fileSize;
-            component.SetProgress(0.8 + (copied / totalDownloadSize));
+            component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize));
           });
         }
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
@@ -110,15 +111,24 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       component.State = VersionState.Downloaded;
     }
 
-    public double GetDownloadFraction(int version, bool isInTemporaryLocation) {
-      string oldVersionLocation = Settings.Default.oldVersionLocation;
+    public enum Location {
+      Depots,
+      Cached,
+      Active
+    };
 
-      // @Performance: If I need to, I can compute number of files downloaded instead of folder size first.
+    public double GetDownloadFraction(int version, Location location) {
       long actualSize = 0;
-      if (isInTemporaryLocation) {
-        foreach (var depot in ManifestData.depots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
-      } else {
-        actualSize += GetFolderSize($"{oldVersionLocation}/{version}");
+      switch (location) {
+        case Location.Depots:
+          foreach (var depot in ManifestData.depots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
+          break;
+        case Location.Cached:
+          actualSize += GetFolderSize($"{Settings.Default.oldVersionLocation}/{version}");
+          break;
+        case Location.Active:
+          actualSize += GetFolderSize($"{Settings.Default.activeVersionLocation}");
+          break;
       }
 
       // If this metric is not accurate, I can potentially improve it using the number of files.

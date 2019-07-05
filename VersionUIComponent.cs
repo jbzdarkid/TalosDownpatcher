@@ -75,6 +75,23 @@ namespace TalosDownpatcher {
       });
     }
 
+    public bool ActionInProgress() {
+      switch (state) {
+        case VersionState.Not_Downloaded:
+        case VersionState.Corrupt:
+        case VersionState.Downloaded:
+        case VersionState.Active:
+          return false;
+        case VersionState.Download_Pending:
+        case VersionState.Downloading:
+        case VersionState.Saving:
+        case VersionState.Copy_Pending:
+        case VersionState.Copying:
+        default:
+          return true;
+      }
+    }
+
     public readonly int version;
     private VersionState state;
     public VersionState State {

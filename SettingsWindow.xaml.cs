@@ -14,6 +14,10 @@ namespace TalosDownpatcher {
     }
 
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
+      settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;
+      bool loaded = ((MainWindow)Application.Current.MainWindow).LoadVersions();
+      if (!loaded) return;
+
       if (!string.IsNullOrWhiteSpace(ActiveBox.Text)) {
         var dir = new DirectoryInfo(ActiveBox.Text);
         if (!dir.Exists) dir.Create();
@@ -25,9 +29,6 @@ namespace TalosDownpatcher {
         if (!dir.Exists) dir.Create();
         settings.oldVersionLocation = InactiveBox.Text;
       }
-
-      settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;
-      ((MainWindow)Application.Current.MainWindow).LoadVersions();
 
       settings.Save(); // Writes to disk
       Close();

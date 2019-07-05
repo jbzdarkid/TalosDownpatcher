@@ -10,10 +10,6 @@ using TalosDownpatcher.Properties;
 // TODO: Gehenna -- this is someone else's problem to solve.
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
-// TODO: Confirm that "set version active" actually resets the state of the other active item.
-
-// TODO: Progress bar for copying? It's awkward to do inside of the copy operation.
-// TODO: Add states + impl for "Saving" (copying to download)
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -24,39 +20,56 @@ namespace TalosDownpatcher {
     public MainWindow() {
       InitializeComponent();
       LoadVersions();
-      dispatcher = this.Dispatcher; // Saved statically so that we can consistently dispatch from any thread
+      dispatcher = Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
-    public void LoadVersions() {
+    public bool LoadVersions() {
+      // Ensure that it's safe to change settings
+      foreach (var uiComponent in uiComponents.Values) {
+        if (uiComponent.ActionInProgress()) {
+          MessageBox.Show($"Cannot save settings while an operation is in progress:\nVersion {uiComponent.version} is {uiComponent.State}");
+          return false;
+        }
+      }
+      foreach (var uiComponent in uiComponents.Values) {
+        uiComponent.Dispose();
+      }
+      uiComponents.Clear();
+
       List<int> versions;
       if (Settings.Default.showAllVersions) {
         versions = ManifestData.allVersions;
       } else {
         versions = ManifestData.commonVersions;
       }
-      this.Height = 50 + versions.Count * 20;
-      foreach (var uiComponent in this.uiComponents.Values) uiComponent.Dispose();
-      this.uiComponents.Clear();
+      Height = 50 + versions.Count * 20;
 
       for (int i = 0; i < versions.Count; i++) {
         int version = versions[i];
-        var uiComponent = new VersionUIComponent(version, 20 * i, this);
+        uiComponents[version] = new VersionUIComponent(version, 20 * i, this);
 
-        double downloadFraction = depotManager.GetDownloadFraction(version, false);
-        if (downloadFraction == 1.0) {
-          if (version == Settings.Default.activeVersion) {
-            uiComponent.State = VersionState.Active;
+        if (version == Settings.Default.activeVersion) {
+          // Running the game creats additional files. This check is mostly to prevent against partial copies.
+          if (depotManager.GetDownloadFraction(version, DepotManager.Location.Active) >= 1.0) {
+            uiComponents[version].State = VersionState.Active;
+            continue;
           } else {
-            uiComponent.State = VersionState.Downloaded;
+            Settings.Default.activeVersion = 0;
+            Settings.Default.Save();
           }
+        }
+
+        double downloadFraction = depotManager.GetDownloadFraction(version, DepotManager.Location.Cached);
+        if (downloadFraction == 1.0) {
+          uiComponents[version].State = VersionState.Downloaded;
         } else if (downloadFraction == 0.0) {
-          uiComponent.State = VersionState.Not_Downloaded;
+          uiComponents[version].State = VersionState.Not_Downloaded;
         } else {
           Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
-          uiComponent.State = VersionState.Corrupt;
+          uiComponents[version].State = VersionState.Corrupt;
         }
-        uiComponents[version] = uiComponent;
       }
+      return true;
     }
 
     // This function is always called on a background thread.
@@ -68,9 +81,11 @@ namespace TalosDownpatcher {
           depotManager.DownloadDepots(component);
           break;
         case VersionState.Downloaded:
-          int activeVersion = Settings.Default.activeVersion;
-          if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
-          depotManager.SetActiveVersion(component);
+          depotManager.SetActiveVersion(component, delegate {
+            // Mark the current active version as inactive. Delayed to account for queueing.
+            int activeVersion = Settings.Default.activeVersion;
+            if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
+          });
           break;
         case VersionState.Active:
           if (component.version <= 249740) {
