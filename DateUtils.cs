@@ -1,7 +1,16 @@
 using System.Runtime.InteropServices;
 
 namespace TalosDownpatcher {
-  public class DateUtils {
+  public static class DateUtils {
+    public static void SetYears(short delta) {
+      SafeNativeMethods.SystemTime time = new SafeNativeMethods.SystemTime();
+      SafeNativeMethods.GetSystemTime(ref time);
+      time.wYear += delta;
+      SafeNativeMethods.SetSystemTime(ref time);
+    }
+  }
+
+  internal static class SafeNativeMethods {
     [StructLayout(LayoutKind.Sequential)]
     public struct SystemTime {
       public short wYear;
@@ -20,11 +29,5 @@ namespace TalosDownpatcher {
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern bool GetSystemTime(ref SystemTime systemTime);
 
-    public static void SetYears(short delta) {
-      SystemTime time = new SystemTime();
-      GetSystemTime(ref time);
-      time.wYear += delta;
-      SetSystemTime(ref time);
-    }
   }
 }

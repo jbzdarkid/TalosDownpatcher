@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,13 +9,13 @@ using System.Windows.Shapes;
 
 namespace TalosDownpatcher {
   public enum VersionState {
-    Not_Downloaded,
+    NotDownloaded,
     Corrupt,
-    Download_Pending,
+    DownloadPending,
     Downloading,
     Saving,
     Downloaded,
-    Copy_Pending,
+    CopyPending,
     Copying,
     Active,
   };
@@ -27,6 +29,7 @@ namespace TalosDownpatcher {
     private Button actionButton;
 
     public VersionUIComponent(int version, int yPos, MainWindow mainWindow) {
+      Contract.Requires(mainWindow != null);
       this.version = version;
       this.mainWindow = mainWindow;
 
@@ -36,7 +39,7 @@ namespace TalosDownpatcher {
       versionBox.Height = 21;
       versionBox.Width = 51;
       versionBox.Margin = new Thickness(10, yPos, 0, 0);
-      versionBox.Text = version.ToString();
+      versionBox.Text = version.ToString("F0", CultureInfo.InvariantCulture);
       versionBox.IsReadOnly = true;
       mainWindow.RootGrid.Children.Add(versionBox);
 
@@ -77,15 +80,15 @@ namespace TalosDownpatcher {
 
     public bool ActionInProgress() {
       switch (state) {
-        case VersionState.Not_Downloaded:
+        case VersionState.NotDownloaded:
         case VersionState.Corrupt:
         case VersionState.Downloaded:
         case VersionState.Active:
           return false;
-        case VersionState.Download_Pending:
+        case VersionState.DownloadPending:
         case VersionState.Downloading:
         case VersionState.Saving:
-        case VersionState.Copy_Pending:
+        case VersionState.CopyPending:
         case VersionState.Copying:
         default:
           return true;
@@ -103,13 +106,13 @@ namespace TalosDownpatcher {
         mainWindow.Dispatcher.Invoke(delegate {
           stateBox.Text = state.ToString().Replace('_', ' ');
           switch (state) {
-            case VersionState.Not_Downloaded:
+            case VersionState.NotDownloaded:
               actionButton.Content = "Download";
               break;
             case VersionState.Corrupt:
               actionButton.Content = "Redownload";
               break;
-            case VersionState.Download_Pending:
+            case VersionState.DownloadPending:
             case VersionState.Downloading:
             case VersionState.Saving:
               actionButton.Content = "Set Active";
@@ -120,7 +123,7 @@ namespace TalosDownpatcher {
               actionButton.Content = "Set Active";
               actionButton.IsEnabled = true;
               break;
-            case VersionState.Copy_Pending:
+            case VersionState.CopyPending:
             case VersionState.Copying:
               actionButton.Content = "Play";
               actionButton.IsEnabled = false;
@@ -136,7 +139,7 @@ namespace TalosDownpatcher {
     }
 
     private void Button_Click(object sender, RoutedEventArgs e) {
-      var thread = new Thread(() => { mainWindow.VersionButton_OnClick(this); });
+      var thread = new Thread(() => { mainWindow.VersionButtonOnClick(this); });
       thread.IsBackground = true;
       thread.Start();
     }
@@ -162,6 +165,7 @@ namespace TalosDownpatcher {
 
     public void Dispose() {
       Dispose(true);
+      GC.SuppressFinalize(this);
     }
     #endregion
   }

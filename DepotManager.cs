@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using System;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -20,10 +21,11 @@ namespace TalosDownpatcher {
     }
 
     public void SetActiveVersion(VersionUIComponent component, Action onDownloadStart) {
+      Contract.Requires(component != null && onDownloadStart != null);
       string activeVersionLocation = Settings.Default.activeVersionLocation;
       string oldVersionLocation = Settings.Default.oldVersionLocation;
 
-      component.State = VersionState.Copy_Pending;
+      component.State = VersionState.CopyPending;
       lock (versionLock) {
         if (component.version == Settings.Default.activeVersion) {
           component.State = VersionState.Active;
@@ -37,7 +39,7 @@ namespace TalosDownpatcher {
           Directory.Delete(activeVersionLocation, true);
         } catch (DirectoryNotFoundException) {
           // Folder already deleted
-        } catch (UnauthorizedAccessException) {
+        } catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException) {
           MessageBox.Show($"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.", "Folder in use");
           component.State = VersionState.Downloaded;
           Settings.Default.activeVersion = 0; // Reset active version, since we're now in a bad state
@@ -62,6 +64,7 @@ namespace TalosDownpatcher {
     }
 
     public void DownloadDepots(VersionUIComponent component) {
+      Contract.Requires(component != null);
       var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
       if (!drive.IsReady) {
         MessageBox.Show($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
@@ -77,7 +80,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         return;
       }
 
-      component.State = VersionState.Download_Pending; // Pending until we lock
+      component.State = VersionState.DownloadPending; // Pending until we lock
       lock (downloadLock) {
         component.State = VersionState.Downloading;
         SteamCommand.OpenConsole();

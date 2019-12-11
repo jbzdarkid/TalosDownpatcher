@@ -5,6 +5,7 @@ using WindowsInput.Native;
 
 namespace TalosDownpatcher {
   public static class SteamCommand {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification="Standard static value format")]
     public static readonly int GAME_ID = 257510;
     private static readonly InputSimulator sim = new InputSimulator();
 

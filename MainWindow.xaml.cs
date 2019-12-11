@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Windows;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
 // TODO: Editor -- this is Apple's problem to solve.
-// TODO: Gehenna -- this is someone else's problem to solve.
+// TODO: Gehenna & Prototype -- this is someone else's problem to solve.
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
+// TODO: Logging...!
+// TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully?
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -63,7 +66,7 @@ namespace TalosDownpatcher {
         if (downloadFraction == 1.0) {
           uiComponents[version].State = VersionState.Downloaded;
         } else if (downloadFraction == 0.0) {
-          uiComponents[version].State = VersionState.Not_Downloaded;
+          uiComponents[version].State = VersionState.NotDownloaded;
         } else {
           Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
           uiComponents[version].State = VersionState.Corrupt;
@@ -73,10 +76,11 @@ namespace TalosDownpatcher {
     }
 
     // This function is always called on a background thread.
-    public void VersionButton_OnClick(VersionUIComponent component) {
+    public void VersionButtonOnClick(VersionUIComponent component) {
+      Contract.Requires(component != null);
       Console.WriteLine($"VersionUIComponent {component.version} clicked in state {component.State}");
       switch (component.State) {
-        case VersionState.Not_Downloaded:
+        case VersionState.NotDownloaded:
         case VersionState.Corrupt:
           depotManager.DownloadDepots(component);
           break;
