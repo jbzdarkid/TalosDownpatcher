@@ -92,9 +92,9 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         component.State = VersionState.Downloading;
         SteamCommand.OpenConsole();
 
-        // foreach (var depot in ManifestData.depots) {
-        //   SteamCommand.DownloadDepot(depot, manifestData[component.version, depot].manifest);
-        // }
+        foreach (var depot in ManifestData.depots) {
+          SteamCommand.DownloadDepot(depot, manifestData[component.version, depot].manifest);
+        }
         if (Settings.Default.ownsGehenna) {
           SteamCommand.DownloadDepot(ManifestData.GEHENNA, manifestData[component.version, ManifestData.GEHENNA].manifest);
         }
