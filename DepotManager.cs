@@ -92,9 +92,9 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         component.State = VersionState.Downloading;
         SteamCommand.OpenConsole();
 
-        foreach (var depot in ManifestData.depots) {
-          SteamCommand.DownloadDepot(depot, manifestData[component.version, depot].manifest);
-        }
+        // foreach (var depot in ManifestData.depots) {
+        //   SteamCommand.DownloadDepot(depot, manifestData[component.version, depot].manifest);
+        // }
         if (Settings.Default.ownsGehenna) {
           SteamCommand.DownloadDepot(ManifestData.GEHENNA, manifestData[component.version, ManifestData.GEHENNA].manifest);
         }
@@ -106,6 +106,9 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         Thread.Sleep(5000); // Extra sleep to avoid a race condition where we check for depots before they're actually cleared.
         double downloadFraction = 0.0;
         while (downloadFraction < 1.0) {
+          Logging.Log($"Gehenna: {GetFolderSize($"{depotLocation}/depot_{ManifestData.GEHENNA}")}");
+          Logging.Log($"Prototype: {GetFolderSize($"{depotLocation}/depot_{ManifestData.PROTOTYPE}")}");
+
           Thread.Sleep(1000);
           downloadFraction = GetDownloadFraction(component.version, Location.Depots);
           component.SetProgress(0.8 * downloadFraction); // 80% - Downloading
@@ -137,7 +140,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       long expectedSize = manifestData.GetDownloadSize(version, package);
       long actualSize = GetFolderSize(GetFolder(version, package));
       Logging.Log($"Package {package} for version {version} is {actualSize} bytes, expected {expectedSize}");
-      // @Robustness: Allow extra floating files in depot downloads? I'm not sure how it helps...
+
       return expectedSize == actualSize;
     }
 
@@ -157,6 +160,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       Active
     };
 
+    // @Bug: This is still wrong, I think.
     public double GetDownloadFraction(int version, Location location) {
       long actualSize = 0;
       switch (location) {
@@ -177,6 +181,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       var src = new DirectoryInfo(folder);
       if (src.Exists) {
         var files = src.GetFiles("*", SearchOption.AllDirectories);
+        Logging.Log($"Actual file count: {files.Length}");
         foreach (var file in files) size += file.Length;
       }
       return size;

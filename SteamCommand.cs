@@ -17,6 +17,7 @@ namespace TalosDownpatcher {
 
     public static void DownloadDepot(int depot, long manifest) {
       Logging.Log($"download_depot {GAME_ID} {depot} {manifest}");
+      if (manifest == 0) return; // 0 indicates "No such manifest", so we shouldn't attempt to download it.
       sim.Keyboard.TextEntry($"download_depot {GAME_ID} {depot} {manifest}");
       sim.Keyboard.KeyPress(VirtualKeyCode.RETURN);
     }

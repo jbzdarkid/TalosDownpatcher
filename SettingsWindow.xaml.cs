@@ -28,7 +28,7 @@ namespace TalosDownpatcher {
       }
 
       if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked) || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
-        Logging.MessageBox($"Warning: Attempting to download Prototype Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.", "Warning");
+        Logging.MessageBox($"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.", "Warning");
       }
 
       settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;

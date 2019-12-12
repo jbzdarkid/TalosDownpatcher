@@ -6,14 +6,16 @@ using System.Windows;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
+// TODO: Progress bar for downloading. This requires estimation of network speeds, which isn't *too* hard. But it's not fun.
 // TODO: Editor
-// TODO: Logging...!
 // TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully? Or, how do I communicate to the user that they should "give up"?
-// TODO: Progress bar for downloading. This requires estimation of network speeds...
-// TODO: Show uncommon, downloaded versions
+// TODO: Show uncommon versions if downloaded
 // TODO: Potentially integrate with SteamWorks to determine install path / DLC status / Game launch status
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
+// TODO: Some way to "delete" a download through the UI?
+// ^ Maybe just add an "Open old versions location" button in settings.
+// TODO: File chooser for version location?
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
