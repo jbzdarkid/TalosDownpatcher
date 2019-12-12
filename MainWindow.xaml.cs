@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,12 +6,14 @@ using System.Windows;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
-// TODO: Editor -- this is Apple's problem to solve.
-// TODO: Gehenna & Prototype -- this is someone else's problem to solve.
+// TODO: Editor
+// TODO: Logging...!
+// TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully? Or, how do I communicate to the user that they should "give up"?
+// TODO: Progress bar for downloading. This requires estimation of network speeds...
+// TODO: Show uncommon, downloaded versions
+// TODO: Potentially integrate with SteamWorks to determine install path / DLC status / Game launch status
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
-// TODO: Logging...!
-// TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully?
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -26,14 +27,18 @@ namespace TalosDownpatcher {
       dispatcher = Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
-    public bool LoadVersions() {
-      // Ensure that it's safe to change settings
+    public bool ActionInProgress() {
       foreach (var uiComponent in uiComponents.Values) {
         if (uiComponent.ActionInProgress()) {
-          MessageBox.Show($"Cannot save settings while an operation is in progress:\nVersion {uiComponent.version} is {uiComponent.State}");
-          return false;
+          return true;
         }
       }
+      return false;
+    }
+
+    public void LoadVersions() {
+      // Ensure that it's safe to discard state
+      if (ActionInProgress()) return;
       foreach (var uiComponent in uiComponents.Values) {
         uiComponent.Dispose();
       }
@@ -52,7 +57,7 @@ namespace TalosDownpatcher {
         uiComponents[version] = new VersionUIComponent(version, 20 * i, this);
 
         if (version == Settings.Default.activeVersion) {
-          // Running the game creats additional files. This check is mostly to prevent against partial copies.
+          // Running the game creates additional files. This check is mostly to prevent against partial copies.
           if (depotManager.GetDownloadFraction(version, DepotManager.Location.Active) >= 1.0) {
             uiComponents[version].State = VersionState.Active;
             continue;
@@ -62,26 +67,30 @@ namespace TalosDownpatcher {
           }
         }
 
-        double downloadFraction = depotManager.GetDownloadFraction(version, DepotManager.Location.Cached);
-        if (downloadFraction == 1.0) {
+        bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
+        bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
+        bool hasPrototype = depotManager.IsFullyDownloaded(version, Package.Prototype);
+
+        if (hasMain && (Settings.Default.ownsGehenna ^ hasGehenna) && (Settings.Default.ownsPrototype ^ hasPrototype)) {
+          // We have everything we should
           uiComponents[version].State = VersionState.Downloaded;
-        } else if (downloadFraction == 0.0) {
-          uiComponents[version].State = VersionState.NotDownloaded;
+        } else if (hasMain || (Settings.Default.ownsGehenna ^ hasGehenna) || (Settings.Default.ownsPrototype ^ hasPrototype)) {
+          // We don't have everything we should, but we do have *something*
+          uiComponents[version].State = VersionState.PartiallyDownloaded;
         } else {
-          Console.WriteLine($"Version {version} is {downloadFraction} downloaded -- marking as corrupt");
-          uiComponents[version].State = VersionState.Corrupt;
+          // We have nothing
+          uiComponents[version].State = VersionState.NotDownloaded;
         }
       }
-      return true;
     }
 
     // This function is always called on a background thread.
     public void VersionButtonOnClick(VersionUIComponent component) {
       Contract.Requires(component != null);
-      Console.WriteLine($"VersionUIComponent {component.version} clicked in state {component.State}");
+      Logging.Log($"VersionUIComponent {component.version} clicked in state {component.State}");
       switch (component.State) {
         case VersionState.NotDownloaded:
-        case VersionState.Corrupt:
+        case VersionState.PartiallyDownloaded:
           depotManager.DownloadDepots(component);
           break;
         case VersionState.Downloaded:
@@ -108,10 +117,12 @@ namespace TalosDownpatcher {
 
     private void SettingsButton_OnClick(object sender, RoutedEventArgs e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
-        settingsWindow = new SettingsWindow();
+        Logging.Log("Showing settings window");
+        settingsWindow = new SettingsWindow(this);
         settingsWindow.Show();
         settingsWindow.Activate();
       } else {
+        Logging.Log("Hiding settings window");
         settingsWindow.Close();
       }
     }
@@ -124,6 +135,7 @@ namespace TalosDownpatcher {
     private static Dispatcher dispatcher;
     public static void SetForeground() {
       dispatcher.Invoke(delegate {
+        Logging.Log("Setting as foreground window");
         var mainWindow = (MainWindow)Application.Current.MainWindow;
         mainWindow.Activate();
       });

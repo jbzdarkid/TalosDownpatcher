@@ -5,10 +5,15 @@ namespace TalosDownpatcher {
   public partial class App : Application {
     private void LaunchOldVersion(object sender, StartupEventArgs e) {
       if (e.Args.Length > 0 && e.Args[0] == "LaunchOldVersion") {
-        DateUtils.SetYears(-3);
+        int yearDelta = DateUtils.GetCurrentYear() - 2016;
+        Logging.Log($"Changing date in order to launch old version. YearDelta: {yearDelta}");
+        DateUtils.SetYears(-yearDelta);
         SteamCommand.StartGame();
-        Thread.Sleep(1000);
-        DateUtils.SetYears(+3);
+        // There's no rush on returning here -- the game is launched, the user is busy.
+        // However, there is harm in not waiting long enough, since the game needs to boot while we're still in 2016.
+        Thread.Sleep(10000);
+        Logging.Log($"Restoring date. YearDelta: {yearDelta}");
+        DateUtils.SetYears(+yearDelta);
 
         Shutdown();
       }

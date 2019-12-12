@@ -1,12 +1,20 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace TalosDownpatcher {
   public static class DateUtils {
-    public static void SetYears(short delta) {
+    public static void SetYears(int delta) {
       SafeNativeMethods.SystemTime time = new SafeNativeMethods.SystemTime();
       SafeNativeMethods.GetSystemTime(ref time);
-      time.wYear += delta;
+      Debug.Assert(delta < short.MaxValue && delta > short.MinValue);
+      time.wYear += (short)delta;
       SafeNativeMethods.SetSystemTime(ref time);
+    }
+
+    public static int GetCurrentYear() {
+      SafeNativeMethods.SystemTime time = new SafeNativeMethods.SystemTime();
+      SafeNativeMethods.GetSystemTime(ref time);
+      return time.wYear;
     }
   }
 

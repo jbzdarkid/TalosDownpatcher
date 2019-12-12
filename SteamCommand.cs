@@ -10,26 +10,32 @@ namespace TalosDownpatcher {
     private static readonly InputSimulator sim = new InputSimulator();
 
     public static void OpenConsole() {
-      Process.Start($"steam://nav/console");
+      Logging.Log("Opening steam console");
+      Process.Start("steam://nav/console");
       Thread.Sleep(100); // Slight delay for steam to become foreground
     }
 
     public static void DownloadDepot(int depot, long manifest) {
+      Logging.Log($"download_depot {GAME_ID} {depot} {manifest}");
       sim.Keyboard.TextEntry($"download_depot {GAME_ID} {depot} {manifest}");
       sim.Keyboard.KeyPress(VirtualKeyCode.RETURN);
     }
 
     public static void StartGame() {
+      Logging.Log("Starting Talos");
       Process.Start($"steam://rungameid/{GAME_ID}");
 
       // Wait for talos to launch (10s max) before returning
       for (var i=0; i<10; i++) {
-        foreach (var process in Process.GetProcesses()) {
-          if (process.ProcessName == "Talos") return;
-        }
-
         Thread.Sleep(1000);
+        foreach (var process in Process.GetProcesses()) {
+          if (process.ProcessName == "Talos") {
+            Logging.Log("Talos process started");
+            return;
+          }
+        }
       }
+      Logging.Log("Talos process not started, not waiting any longer");
     }
   }
 }

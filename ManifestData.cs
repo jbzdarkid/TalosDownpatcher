@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public class Datum {
@@ -24,23 +25,33 @@ namespace TalosDownpatcher {
       220675, 220625, 220480
     };
 
-    // Ordered by size (2MB, 2MB, 26MB, 6+ GB)
-    public static readonly List<int> depots = new List<int> {
-        257516, 257519, 257511, 257515
-    };
+    public static readonly int GEHENNA = 358470;
+    public static readonly int PROTOTYPE = 322022;
+    public static readonly List<int> depots = new List<int> {257516, 257519, 257511, 257515};
 
     private Dictionary<int, Dictionary<int, Datum>> data;
 
+    // Helper function so that data can be private. This also helps the runtime avoid accidentally copying data[version] as an intermediate.
     public Datum this[int version, int depot] {
-      get {
-        return data[version][depot];
-      }
+      get {return data[version][depot];}
     }
 
-    public double GetTotalDownloadSize(int version) {
-      double totalDownloadSize = 0;
-      foreach (var depot in depots) totalDownloadSize += this[version, depot].size;
-      return totalDownloadSize;
+    public long GetTotalDownloadSize(int version) {
+      return GetDownloadSize(version, Package.Main) + GetDownloadSize(version, Package.Gehenna) + GetDownloadSize(version, Package.Prototype);
+    }
+
+    public long GetDownloadSize(int version, Package package) {
+      if (package == Package.Main) {
+        long totalDownloadSize = 0;
+        foreach (var depot in depots) totalDownloadSize += this[version, depot].size;
+        return totalDownloadSize;
+      } else if (package == Package.Gehenna) {
+        return this[version, GEHENNA].size;
+      } else if (package == Package.Prototype) {
+        return this[version, PROTOTYPE].size;
+      } else {
+        return 0;
+      }
     }
 
     public ManifestData() {
@@ -190,6 +201,32 @@ namespace TalosDownpatcher {
       data[220675][257519] = new Datum(4554990112195176406, 1, 1789447);
       data[220625][257519] = new Datum(1272083368566319066, 1, 1789447);
       data[220480][257519] = new Datum(2322040020544521685, 1, 1739595);
+
+      data[440323][358470] = new Datum(0981576150363927305, 0, 0);
+      data[429074][358470] = new Datum(6406142202705981356, 0, 0);
+      data[426014][358470] = new Datum(3702226411907956172, 0, 0);
+      data[424910][358470] = new Datum(0446988425271855249, 0, 0);
+      data[326589][358470] = new Datum(5178136109328124898, 0, 0);
+      data[301136][358470] = new Datum(1599787433380595759, 0, 0);
+      data[300763][358470] = new Datum(2608271957197798008, 0, 0);
+      data[293384][358470] = new Datum(3689687611838010639, 0, 0);
+      data[291145][358470] = new Datum(3878145609496862471, 0, 0);
+      data[284152][358470] = new Datum(6462721285409783950, 0, 0);
+      data[277544][358470] = new Datum(5026831778825708639, 0, 0);
+      data[269335][358470] = new Datum(2971770452830915701, 0, 0);
+      data[267252][358470] = new Datum(7441510589944616318, 0, 0);
+      data[264510][358470] = new Datum(8410067891696867813, 0, 0);
+      data[260924][358470] = new Datum(4919986680879759016, 0, 0);
+      data[258375][358470] = new Datum(5851055062358757678, 0, 0);
+      data[252786][358470] = new Datum(1181179272206183222, 0, 0);
+      data[250756][358470] = new Datum(5457565769128401790, 0, 0);
+      data[249913][358470] = new Datum(2832266850408399266, 0, 0);
+      data[249740][358470] = new Datum(6996102492712095516, 0, 0);
+      data[248828][358470] = new Datum(1215334353744988752, 0, 0);
+      data[248139][358470] = new Datum(9140920440213320364, 0, 0);
+      data[246379][358470] = new Datum(7419870507570765883, 0, 0);
+      data[244371][358470] = new Datum(8176613815265754262, 0, 0);
+      data[243520][358470] = new Datum(3645040643832281528, 0, 0);
     }
   }
 }

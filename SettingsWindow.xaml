@@ -10,11 +10,15 @@
   <Grid Margin="0,0,0,0">
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0" Content="Talos Install Location"/>
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,25,0,0" Content="Inactive Version Location"/>
-    <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,50,0,0" Content="Show less commonly used versions"/>
-    <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="120,4,0,0" Name="ActiveBox" Height="20" Width="500"/>
+		<Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,50,0,0" Name="AllVersionsLabel" Content="Show less commonly used versions"/>
+		<Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220,50,0,0" Name="GehennaLabel" Content="Download Gehenna"/>
+		<Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="360,50,0,0" Name="PrototypeLabel" Content="Download Prototype"/>
+		<TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="120,4,0,0" Name="ActiveBox" Height="20" Width="500"/>
     <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="140,29,0,0" Name="InactiveBox" Height="20" Width="480"/>
-    <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="195,56,0,0" Name="AllVersionsCheckbox"/>
-    <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,80,0,0" Content="Restore Defaults" Click="ButtonDefault_Click"/>
+		<CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="195,56,0,0" Name="AllVersionsCheckbox"/>
+		<CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="335,56,0,0" Name="GehennaCheckbox"/>
+		<CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="480,56,0,0" Name="PrototypeCheckbox"/>
+		<Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,80,0,0" Content="Restore Defaults" Click="ButtonDefault_Click"/>
     <Button VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,80,5,0" Content="Save and Close" Click="ButtonSave_Click"/>
   </Grid>
 </Window>

@@ -10,7 +10,7 @@ using System.Windows.Shapes;
 namespace TalosDownpatcher {
   public enum VersionState {
     NotDownloaded,
-    Corrupt,
+    PartiallyDownloaded,
     DownloadPending,
     Downloading,
     Saving,
@@ -70,6 +70,8 @@ namespace TalosDownpatcher {
       actionButton.Click += Button_Click;
       actionButton.Margin = new Thickness(180, yPos, 0, 0);
       mainWindow.RootGrid.Children.Add(actionButton);
+
+      Logging.Log($"Constructed UI Component {version} at yPos {yPos}");
     }
 
     public void SetProgress(double fractionDownloaded) {
@@ -81,7 +83,7 @@ namespace TalosDownpatcher {
     public bool ActionInProgress() {
       switch (state) {
         case VersionState.NotDownloaded:
-        case VersionState.Corrupt:
+        case VersionState.PartiallyDownloaded:
         case VersionState.Downloaded:
         case VersionState.Active:
           return false;
@@ -102,36 +104,54 @@ namespace TalosDownpatcher {
         return state;
       }
       set {
+        Logging.Log($"Changing state for UIComponent {version} from {state} to {value}");
         state = value;
         mainWindow.Dispatcher.Invoke(delegate {
-          stateBox.Text = state.ToString().Replace('_', ' ');
           switch (state) {
             case VersionState.NotDownloaded:
               actionButton.Content = "Download";
+              stateBox.Text = "Not Downloaded";
               break;
-            case VersionState.Corrupt:
+            case VersionState.PartiallyDownloaded:
               actionButton.Content = "Redownload";
+              stateBox.Text = "Partially Downloaded";
               break;
             case VersionState.DownloadPending:
+              actionButton.Content = "Set Active";
+              actionButton.IsEnabled = false;
+              stateBox.Text = "Download Pending";
+              break;
             case VersionState.Downloading:
+              actionButton.Content = "Set Active";
+              actionButton.IsEnabled = false;
+              stateBox.Text = "Downloading";
+              break;
             case VersionState.Saving:
               actionButton.Content = "Set Active";
               actionButton.IsEnabled = false;
+              stateBox.Text = "Saving";
               break;
             case VersionState.Downloaded:
               SetProgress(0.0);
               actionButton.Content = "Set Active";
               actionButton.IsEnabled = true;
+              stateBox.Text = "Downloaded";
               break;
             case VersionState.CopyPending:
+              actionButton.Content = "Play";
+              actionButton.IsEnabled = false;
+              stateBox.Text = "Copy Pending";
+              break;
             case VersionState.Copying:
               actionButton.Content = "Play";
               actionButton.IsEnabled = false;
+              stateBox.Text = "Copying";
               break;
             case VersionState.Active:
               SetProgress(0.0);
               actionButton.Content = "Play";
               actionButton.IsEnabled = true;
+              stateBox.Text = "Active";
               break;
           }
         });
