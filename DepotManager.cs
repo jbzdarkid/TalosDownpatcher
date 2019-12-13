@@ -83,6 +83,7 @@ namespace TalosDownpatcher {
         return;
       }
 
+      // @Bug: Not accounting for DLC packages
       double totalDownloadSize = manifestData.GetTotalDownloadSize(version);
       long freeSpace = drive.TotalFreeSpace;
       if (drive.TotalFreeSpace < totalDownloadSize) {
