@@ -1,10 +1,14 @@
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Threading;
 using TalosDownpatcher.Properties;
+
+// TODO: Move the utilities into a separate file.
+// TODO: Don't redownload depots which are done
 
 namespace TalosDownpatcher {
   public class DepotManager {
@@ -50,7 +54,7 @@ namespace TalosDownpatcher {
         Logging.Log("Deletion successful");
 
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
-        CopyAndOverwrite($"{oldVersionLocation}/{component.version}/Bin", $"{activeVersionLocation}/Bin/x64", null);
+        CopyAndOverwrite(GetFolder(component.version, Package.Main) + "/Bin", activeVersionLocation + "/Bin/x64", null);
 
         double totalSize = manifestData.GetTotalDownloadSize(component.version);
         long copied = 0;
@@ -70,15 +74,16 @@ namespace TalosDownpatcher {
     
     public void DownloadDepots(VersionUIComponent component) {
       Contract.Requires(component != null);
+      int version = component.version;
 
-      Logging.Log($"Downloading depots for {component.version}");
+      Logging.Log($"Downloading depots for {version}");
       var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
       if (!drive.IsReady) {
         Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
         return;
       }
 
-      double totalDownloadSize = manifestData.GetTotalDownloadSize(component.version);
+      double totalDownloadSize = manifestData.GetTotalDownloadSize(version);
       long freeSpace = drive.TotalFreeSpace;
       if (drive.TotalFreeSpace < totalDownloadSize) {
         Logging.MessageBox($@"Steam install location is in drive {drive.Name}
@@ -92,26 +97,61 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         component.State = VersionState.Downloading;
         SteamCommand.OpenConsole();
 
-        foreach (var depot in ManifestData.depots) {
-          SteamCommand.DownloadDepot(depot, manifestData[component.version, depot].manifest);
+        // @Cleanup: Helper function?
+        List<int> neededDepots = new List<int>();
+        if (!IsFullyDownloaded(version, Package.Main)) {
+          neededDepots.AddRange(ManifestData.depots);
         }
-        if (Settings.Default.ownsGehenna) {
-          SteamCommand.DownloadDepot(ManifestData.GEHENNA, manifestData[component.version, ManifestData.GEHENNA].manifest);
+        if (Settings.Default.ownsGehenna && !IsFullyDownloaded(version, Package.Gehenna)) {
+          neededDepots.Add(ManifestData.GEHENNA);
         }
-        if (Settings.Default.ownsPrototype) {
-          SteamCommand.DownloadDepot(ManifestData.PROTOTYPE, manifestData[component.version, ManifestData.PROTOTYPE].manifest);
+        if (Settings.Default.ownsPrototype && !IsFullyDownloaded(version, Package.Prototype)) {
+          neededDepots.Add(ManifestData.PROTOTYPE);
         }
+
+        foreach (var depot in neededDepots) SteamCommand.DownloadDepot(depot, manifestData[version, depot].manifest);
         MainWindow.SetForeground();
 
         Thread.Sleep(5000); // Extra sleep to avoid a race condition where we check for depots before they're actually cleared.
-        double downloadFraction = 0.0;
-        while (downloadFraction < 1.0) {
-          Logging.Log($"Gehenna: {GetFolderSize($"{depotLocation}/depot_{ManifestData.GEHENNA}")}");
-          Logging.Log($"Prototype: {GetFolderSize($"{depotLocation}/depot_{ManifestData.PROTOTYPE}")}");
 
+        // double expectedSize = 0;
+        // foreach (var depot in neededDepots) totalDownloadSize += manifestData[version, depot].size;
+
+        List<int> downloadedDepots = new List<int>();
+        List<int> copiedDepots = new List<int>();
+
+        while (true) {
           Thread.Sleep(1000);
-          downloadFraction = GetDownloadFraction(component.version, Location.Depots);
-          component.SetProgress(0.8 * downloadFraction); // 80% - Downloading
+
+          double progress = 0.0;
+          if (downloadedDepots.Count == downloadedDepots.Count) {
+
+          }
+
+          long downloadedBytes = 0;
+          long copiedBytes = 0;
+          foreach (var depot in neededDepots) {
+            if (copiedDepots.Contains(depot)) {
+              actualSize += 
+              continue;
+            } else if ()
+
+
+
+
+
+            long downloaded = GetFolderSize($"{depotLocation}/depot_{depot}");
+            if (downloaded == manifestData[version, depot].size) {
+              neededDepots.
+              var thread = new Thread(() => { mainWindow.VersionButtonOnClick(this); });
+              thread.IsBackground = true;
+              thread.Start();
+            }
+
+            actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
+          }
+
+          component.SetProgress(0.8 * actualSize / expectedSize); // 80% - Downloading
         }
         component.State = VersionState.Saving;
 
@@ -120,11 +160,18 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
           copied += fileSize;
           component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
         };
-        foreach (var depot in ManifestData.depots) {
-          CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(component.version, Package.Main), progress);
+
+        // @Performance: Start copying while downloads are in progress?
+        // Requires a background thread for copying, so that progress can still update.
+        foreach (var depot in neededDepots) {
+          if (depot == ManifestData.GEHENNA) {
+            CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Gehenna), progress);
+          } else if (depot == ManifestData.PROTOTYPE) {
+            CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Prototype), progress);
+          } else {
+            CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Main), progress);
+          }
         }
-        CopyAndOverwrite($"{depotLocation}/depot_{ManifestData.GEHENNA}", GetFolder(component.version, Package.Gehenna), progress);
-        CopyAndOverwrite($"{depotLocation}/depot_{ManifestData.PROTOTYPE}", GetFolder(component.version, Package.Prototype), progress);
 
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
           Logging.Log("Low on disk space, clearing download directory");
