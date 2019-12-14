@@ -63,7 +63,7 @@ namespace TalosDownpatcher {
         bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
         bool hasPrototype = depotManager.IsFullyDownloaded(version, Package.Prototype);
 
-        if (hasMain && (Settings.Default.ownsGehenna ^ hasGehenna) && (Settings.Default.ownsPrototype ^ hasPrototype)) {
+        if (hasMain && (!Settings.Default.ownsGehenna || hasGehenna) && (!Settings.Default.ownsPrototype || hasPrototype)) {
           // We have everything we should
           if (version == Settings.Default.activeVersion) {
             if (depotManager.IsFullyCopied(version)) {
@@ -75,7 +75,7 @@ namespace TalosDownpatcher {
           } else {
             uiComponents[version].State = VersionState.Downloaded;
           }
-        } else if (hasMain || (Settings.Default.ownsGehenna ^ hasGehenna) || (Settings.Default.ownsPrototype ^ hasPrototype)) {
+        } else if (hasMain || (Settings.Default.ownsGehenna && hasGehenna) || (Settings.Default.ownsPrototype && hasPrototype)) {
           // We don't have everything we should, but we do have *something*
           uiComponents[version].State = VersionState.PartiallyDownloaded;
         } else {
