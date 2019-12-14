@@ -8,15 +8,14 @@ using System.Threading;
 using TalosDownpatcher.Properties;
 
 // TODO: Move the utilities into a separate file.
-// TODO: Don't redownload depots which are done
 
 namespace TalosDownpatcher {
   public class DepotManager {
     private readonly ManifestData manifestData;
 
     private readonly string depotLocation;
-    private static readonly object downloadLock = new object();
-    private static readonly object versionLock = new object();
+    private readonly object downloadLock = new object();
+    private readonly object versionLock = new object();
 
     public DepotManager() {
       manifestData = new ManifestData();
@@ -27,7 +26,6 @@ namespace TalosDownpatcher {
     public void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
       Contract.Requires(component != null && onSetActiveVersion != null);
       string activeVersionLocation = Settings.Default.activeVersionLocation;
-      string oldVersionLocation = Settings.Default.oldVersionLocation;
 
       component.State = VersionState.CopyPending;
       lock (versionLock) {
@@ -37,7 +35,11 @@ namespace TalosDownpatcher {
         }
         Logging.Log($"Changing active version from {Settings.Default.activeVersion} to {component.version}");
         component.State = VersionState.Copying;
-        onSetActiveVersion();
+        onSetActiveVersion(); // Sets the previously active version to Downloaded
+
+        // Reset active version for the duration of the copy, since any failure will leave us in a bad state.
+        Settings.Default.activeVersion = 0;
+        Settings.Default.Save();
 
         // Carefully clean target folder before copying
         try {
@@ -47,8 +49,6 @@ namespace TalosDownpatcher {
         } catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException) {
           Logging.MessageBox($"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.", "Folder in use");
           component.State = VersionState.Downloaded;
-          Settings.Default.activeVersion = 0; // Reset active version, since we're now in a bad state
-          Settings.Default.Save();
           return;
         }
         Logging.Log("Deletion successful");
@@ -56,49 +56,42 @@ namespace TalosDownpatcher {
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
         CopyAndOverwrite(GetFolder(component.version, Package.Main) + "/Bin", activeVersionLocation + "/Bin/x64", null);
 
-        double totalSize = manifestData.GetTotalDownloadSize(component.version);
+        List<Package> requiredPackages = new List<Package>{Package.Main};
+        if (Settings.Default.ownsGehenna) requiredPackages.Add(Package.Gehenna);
+        if (Settings.Default.ownsPrototype) requiredPackages.Add(Package.Prototype);
+
+        double totalSize = 0;
+        foreach (var package in requiredPackages) totalSize += GetFolderSize(GetFolder(component.version, package));
+
+        // @Performance Multithreading *may* save time here. I doubt it.
         long copied = 0;
-        Action<long> progress = delegate (long fileSize) {
-          copied += fileSize;
-          component.SetProgress(copied / totalSize);
-        };
-        CopyAndOverwrite(GetFolder(component.version, Package.Main), activeVersionLocation, progress);
-        CopyAndOverwrite(GetFolder(component.version, Package.Gehenna), activeVersionLocation, progress);
-        CopyAndOverwrite(GetFolder(component.version, Package.Prototype), activeVersionLocation, progress);
-        component.State = VersionState.Active;
+        foreach (var package in requiredPackages) {
+          CopyAndOverwrite(GetFolder(component.version, package), activeVersionLocation, delegate (long fileSize) {
+            copied += fileSize;
+            component.SetProgress(copied / totalSize);
+          });
+        }
 
         Settings.Default.activeVersion = component.version;
         Settings.Default.Save();
+
+        component.State = VersionState.Active;
       }
     }
-    
+
     public void DownloadDepots(VersionUIComponent component) {
       Contract.Requires(component != null);
-      int version = component.version;
-
-      Logging.Log($"Downloading depots for {version}");
-      var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
-      if (!drive.IsReady) {
-        Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
-        return;
-      }
-
-      // @Bug: Not accounting for DLC packages
-      double totalDownloadSize = manifestData.GetTotalDownloadSize(version);
-      long freeSpace = drive.TotalFreeSpace;
-      if (drive.TotalFreeSpace < totalDownloadSize) {
-        Logging.MessageBox($@"Steam install location is in drive {drive.Name}
-has {Math.Round(freeSpace / 1000000000.0, 1)} GB of free space
-but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not enough space");
-        return;
-      }
-
       component.State = VersionState.DownloadPending; // Pending until we lock
       lock (downloadLock) {
-        component.State = VersionState.Downloading;
-        SteamCommand.OpenConsole();
+        int version = component.version;
 
-        // @Cleanup: Helper function?
+        Logging.Log($"Downloading depots for {version}");
+        var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
+        if (!drive.IsReady) {
+          Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
+          return;
+        }
+
         List<int> neededDepots = new List<int>();
         if (!IsFullyDownloaded(version, Package.Main)) {
           neededDepots.AddRange(ManifestData.depots);
@@ -110,49 +103,34 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
           neededDepots.Add(ManifestData.PROTOTYPE);
         }
 
-        foreach (var depot in neededDepots) SteamCommand.DownloadDepot(depot, manifestData[version, depot].manifest);
-        MainWindow.SetForeground();
+        double totalDownloadSize = 0;
+        foreach (var depot in neededDepots) totalDownloadSize += manifestData[version, depot].size;
+
+        long freeSpace = drive.TotalFreeSpace;
+        if (drive.TotalFreeSpace < totalDownloadSize) {
+          Logging.MessageBox($@"Steam install location is in drive {drive.Name}
+  has {Math.Round(freeSpace / 1000000000.0, 1)} GB of free space
+  but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not enough space");
+          return;
+        }
+
+        component.State = VersionState.Downloading;
+
+        { // Keep steam interaction close together, to avoid accidental user interference
+          SteamCommand.OpenConsole();
+          Thread.Sleep(10);
+          foreach (var depot in neededDepots) SteamCommand.DownloadDepot(depot, manifestData[version, depot].manifest);
+          MainWindow.SetForeground();
+        }
 
         Thread.Sleep(5000); // Extra sleep to avoid a race condition where we check for depots before they're actually cleared.
 
-        // double expectedSize = 0;
-        // foreach (var depot in neededDepots) totalDownloadSize += manifestData[version, depot].size;
-
-        List<int> downloadedDepots = new List<int>();
-        List<int> copiedDepots = new List<int>();
-
         while (true) {
+          long actualSize = 0;
+          foreach (var depot in neededDepots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
+          component.SetProgress(0.8 * actualSize / totalDownloadSize); // 80% - Downloading
+          if (actualSize == totalDownloadSize) break;
           Thread.Sleep(1000);
-
-          double progress = 0.0;
-          if (downloadedDepots.Count == downloadedDepots.Count) {
-
-          }
-
-          long downloadedBytes = 0;
-          long copiedBytes = 0;
-          foreach (var depot in neededDepots) {
-            if (copiedDepots.Contains(depot)) {
-              actualSize += 
-              continue;
-            } else if ()
-
-
-
-
-
-            long downloaded = GetFolderSize($"{depotLocation}/depot_{depot}");
-            if (downloaded == manifestData[version, depot].size) {
-              neededDepots.
-              var thread = new Thread(() => { mainWindow.VersionButtonOnClick(this); });
-              thread.IsBackground = true;
-              thread.Start();
-            }
-
-            actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
-          }
-
-          component.SetProgress(0.8 * actualSize / expectedSize); // 80% - Downloading
         }
         component.State = VersionState.Saving;
 
@@ -163,7 +141,6 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         };
 
         // @Performance: Start copying while downloads are in progress?
-        // Requires a background thread for copying, so that progress can still update.
         foreach (var depot in neededDepots) {
           if (depot == ManifestData.GEHENNA) {
             CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Gehenna), progress);
@@ -178,11 +155,21 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
           Logging.Log("Low on disk space, clearing download directory");
           Directory.Delete(depotLocation, true);
         }
+        component.State = VersionState.Downloaded;
       }
-      component.State = VersionState.Downloaded;
     }
 
     // *** Utilities ***
+
+    public bool IsFullyCopied(int version) {
+      long actualSize = GetFolderSize($"{Settings.Default.activeVersionLocation}");
+
+      long expectedSize = 0;
+      expectedSize += manifestData.GetDownloadSize(version, Package.Main);
+      if (Settings.Default.ownsGehenna) expectedSize += manifestData.GetDownloadSize(version, Package.Gehenna);
+      if (Settings.Default.ownsPrototype) expectedSize += manifestData.GetDownloadSize(version, Package.Prototype);
+      return actualSize >= expectedSize;
+    }
 
     public bool IsFullyDownloaded(int version, Package package) {
       long expectedSize = manifestData.GetDownloadSize(version, package);
@@ -203,33 +190,11 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       }
     }
 
-    public enum Location {
-      Depots,
-      Active
-    };
-
-    // @Bug: This is still wrong, I think.
-    public double GetDownloadFraction(int version, Location location) {
-      long actualSize = 0;
-      switch (location) {
-        case Location.Depots:
-          foreach (var depot in ManifestData.depots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
-          break;
-        case Location.Active:
-          actualSize += GetFolderSize($"{Settings.Default.activeVersionLocation}");
-          break;
-      }
-
-      // If this metric is not accurate, I can potentially improve it using the number of files.
-      return actualSize / (double)manifestData.GetTotalDownloadSize(version);
-    }
-
     private static long GetFolderSize(string folder) {
       long size = 0;
       var src = new DirectoryInfo(folder);
       if (src.Exists) {
         var files = src.GetFiles("*", SearchOption.AllDirectories);
-        Logging.Log($"Actual file count: {files.Length}");
         foreach (var file in files) size += file.Length;
       }
       return size;

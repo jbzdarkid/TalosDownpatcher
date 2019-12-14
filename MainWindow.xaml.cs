@@ -59,24 +59,22 @@ namespace TalosDownpatcher {
         int version = versions[i];
         uiComponents[version] = new VersionUIComponent(version, 20 * i, this);
 
-        if (version == Settings.Default.activeVersion) {
-          // Running the game creates additional files. This check is mostly to prevent against partial copies.
-          if (depotManager.GetDownloadFraction(version, DepotManager.Location.Active) >= 1.0) {
-            uiComponents[version].State = VersionState.Active;
-            continue;
-          } else {
-            Settings.Default.activeVersion = 0;
-            Settings.Default.Save();
-          }
-        }
-
         bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
         bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
         bool hasPrototype = depotManager.IsFullyDownloaded(version, Package.Prototype);
 
         if (hasMain && (Settings.Default.ownsGehenna ^ hasGehenna) && (Settings.Default.ownsPrototype ^ hasPrototype)) {
           // We have everything we should
-          uiComponents[version].State = VersionState.Downloaded;
+          if (version == Settings.Default.activeVersion) {
+            if (depotManager.IsFullyCopied(version)) {
+              uiComponents[version].State = VersionState.Active;
+            } else {
+              Settings.Default.activeVersion = 0;
+              Settings.Default.Save();
+            }
+          } else {
+            uiComponents[version].State = VersionState.Downloaded;
+          }
         } else if (hasMain || (Settings.Default.ownsGehenna ^ hasGehenna) || (Settings.Default.ownsPrototype ^ hasPrototype)) {
           // We don't have everything we should, but we do have *something*
           uiComponents[version].State = VersionState.PartiallyDownloaded;

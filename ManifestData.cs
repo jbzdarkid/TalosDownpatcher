@@ -35,10 +35,6 @@ namespace TalosDownpatcher {
       get {return data[version][depot];}
     }
 
-    public long GetTotalDownloadSize(int version) {
-      return GetDownloadSize(version, Package.Main) + GetDownloadSize(version, Package.Gehenna) + GetDownloadSize(version, Package.Prototype);
-    }
-
     public long GetDownloadSize(int version, Package package) {
       if (package == Package.Main) {
         long totalDownloadSize = 0;
