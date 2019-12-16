@@ -135,20 +135,18 @@ namespace TalosDownpatcher {
         component.State = VersionState.Saving;
 
         long copied = 0;
-        Action<long> progress = delegate (long fileSize) {
-          copied += fileSize;
-          component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
-        };
 
         // @Performance: Start copying while downloads are in progress?
         foreach (var depot in neededDepots) {
-          if (depot == ManifestData.GEHENNA) {
-            CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Gehenna), progress);
-          } else if (depot == ManifestData.PROTOTYPE) {
-            CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Prototype), progress);
-          } else {
-            CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, Package.Main), progress);
-          }
+          var package = Package.Main;
+          if (ManifestData.depots.Contains(depot)) package = Package.Main;
+          else if (depot == ManifestData.GEHENNA) package = Package.Gehenna;
+          else if (depot == ManifestData.PROTOTYPE) package = Package.Prototype;
+
+          CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, package), delegate (long fileSize) {
+            copied += fileSize;
+            component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
+          });
         }
 
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
