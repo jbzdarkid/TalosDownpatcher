@@ -7,8 +7,6 @@ using System.IO;
 using System.Threading;
 using TalosDownpatcher.Properties;
 
-// TODO: Move the utilities into a separate file.
-
 namespace TalosDownpatcher {
   public class DepotManager {
     private readonly ManifestData manifestData;
@@ -166,6 +164,7 @@ namespace TalosDownpatcher {
       expectedSize += manifestData.GetDownloadSize(version, Package.Main);
       if (Settings.Default.ownsGehenna) expectedSize += manifestData.GetDownloadSize(version, Package.Gehenna);
       if (Settings.Default.ownsPrototype) expectedSize += manifestData.GetDownloadSize(version, Package.Prototype);
+      Logging.Log("Actual: " + actualSize + " Expected: " + expectedSize + " IsFullyCopied: " + (actualSize >= expectedSize));
       return actualSize >= expectedSize;
     }
 

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using TalosDownpatcher.Properties;
 
@@ -8,13 +10,15 @@ namespace TalosDownpatcher {
     private string buffer;
     private int buffSize;
     private readonly FileStream fs;
-    private readonly BinaryWriter sw;
+    private readonly StreamWriter sw;
+    private readonly string pid;
 
     public static void Init() { if (instance == null) instance = new Logging(); }
     private Logging() {
       AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
-      fs = new FileStream(Settings.Default.oldVersionLocation + "/TalosDownpatcher.log" , FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write);
-      sw = new BinaryWriter(fs);
+      fs = new FileStream(Settings.Default.oldVersionLocation + "/TalosDownpatcher.log" , FileMode.Append, FileAccess.Write, FileShare.Write);
+      sw = new StreamWriter(fs);
+      pid = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
     }
 
     private void OnProcessExit(object sender, EventArgs e) {
@@ -34,13 +38,17 @@ namespace TalosDownpatcher {
     }
 
     public static void Log(string message) {
-      message += "\n";
+      lock(instance) {
+        instance.LogInternal(message);
+      }
+    }
+
+    private void LogInternal(string message) {
+      message = pid + "\t" + DateTime.Now.ToString("yyyy/mm/dd hh:mm:ss.fff\t: ", CultureInfo.InvariantCulture) + message + "\n";
       Console.Write(message);
 
-      lock(instance) {
-        instance.buffer += message;
-        if (++instance.buffSize >= 5) instance.Flush();
-      }
+      buffer += message;
+      if (++buffSize >= 5) Flush();
     }
 
     public static void MessageBox(string message, string title) {
