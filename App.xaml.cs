@@ -4,6 +4,8 @@ using System.Windows;
 namespace TalosDownpatcher {
   public partial class App : Application {
     private void AppStartup(object sender, StartupEventArgs e) {
+      Logging.Init();
+
       if (e.Args.Length > 0 && e.Args[0] == "LaunchOldVersion") {
         int yearDelta = DateUtils.GetCurrentYear() - 2016;
         Logging.Log($"Changing date in order to launch old version. YearDelta: {yearDelta}");
