@@ -33,6 +33,7 @@ namespace TalosDownpatcher {
 
     private void Flush() {
       sw.Write(buffer);
+      sw.Flush();
       buffer = "";
       buffSize = 0;
     }
