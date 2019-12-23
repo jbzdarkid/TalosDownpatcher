@@ -16,7 +16,11 @@ namespace TalosDownpatcher {
     public static void Init() { if (instance == null) instance = new Logging(); }
     private Logging() {
       AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
-      fs = new FileStream(Settings.Default.oldVersionLocation + "/TalosDownpatcher.log" , FileMode.Append, FileAccess.Write, FileShare.Write);
+      string baseDir = Settings.Default.oldVersionLocation;
+      if (!Directory.Exists(baseDir)) {
+        baseDir = Path.GetTempPath();
+      }
+      fs = new FileStream(Path.Combine(baseDir, "TalosDownpatcher.log"), FileMode.Append, FileAccess.Write, FileShare.Write);
       sw = new StreamWriter(fs);
       pid = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
     }
