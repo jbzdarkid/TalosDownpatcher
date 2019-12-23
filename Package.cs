@@ -3,5 +3,6 @@
     Main,
     Gehenna,
     Prototype,
+    All
   }
 }

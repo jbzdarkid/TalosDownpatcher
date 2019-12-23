@@ -9,14 +9,11 @@ using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    private readonly ManifestData manifestData;
-
     private readonly string depotLocation;
     private readonly object downloadLock = new object();
     private readonly object versionLock = new object();
 
     public DepotManager() {
-      manifestData = new ManifestData();
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
       depotLocation = $"{steamInstall}/steamapps/content/app_257510";
     }
@@ -90,19 +87,20 @@ namespace TalosDownpatcher {
           return;
         }
 
-        List<int> neededDepots = new List<int>();
+        List<SteamManifest> neededManifests = new List<SteamManifest>();
+        long totalDownloadSize = 0;
         if (!IsFullyDownloaded(version, Package.Main)) {
-          neededDepots.AddRange(ManifestData.depots);
+          neededManifests.AddRange(ManifestData.GetManifestsForVersion(version, Package.Main));
+          totalDownloadSize += ManifestData.GetDownloadSize(version, Package.Main);
         }
         if (Settings.Default.ownsGehenna && !IsFullyDownloaded(version, Package.Gehenna)) {
-          neededDepots.Add(ManifestData.GEHENNA);
+          neededManifests.AddRange(ManifestData.GetManifestsForVersion(version, Package.Gehenna));
+          totalDownloadSize += ManifestData.GetDownloadSize(version, Package.Gehenna);
         }
         if (Settings.Default.ownsPrototype && !IsFullyDownloaded(version, Package.Prototype)) {
-          neededDepots.Add(ManifestData.PROTOTYPE);
+          neededManifests.AddRange(ManifestData.GetManifestsForVersion(version, Package.Prototype));
+          totalDownloadSize += ManifestData.GetDownloadSize(version, Package.Prototype);
         }
-
-        double totalDownloadSize = 0;
-        foreach (var depot in neededDepots) totalDownloadSize += manifestData[version, depot].size;
 
         long freeSpace = drive.TotalFreeSpace;
         if (drive.TotalFreeSpace < totalDownloadSize) {
@@ -117,7 +115,7 @@ namespace TalosDownpatcher {
         { // Keep steam interaction close together, to avoid accidental user interference
           SteamCommand.OpenConsole();
           Thread.Sleep(10);
-          foreach (var depot in neededDepots) SteamCommand.DownloadDepot(depot, manifestData[version, depot].manifest);
+          foreach (var manifest in neededManifests) SteamCommand.DownloadManifest(manifest);
           MainWindow.SetForeground();
         }
 
@@ -125,7 +123,7 @@ namespace TalosDownpatcher {
 
         while (true) {
           long actualSize = 0;
-          foreach (var depot in neededDepots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
+          foreach (var manifest in neededManifests) actualSize += GetFolderSize($"{depotLocation}/depot_{manifest.depotId}");
           component.SetProgress(0.8 * actualSize / totalDownloadSize); // 80% - Downloading
           if (actualSize == totalDownloadSize) break;
           Thread.Sleep(1000);
@@ -135,13 +133,8 @@ namespace TalosDownpatcher {
         long copied = 0;
 
         // @Performance: Start copying while downloads are in progress?
-        foreach (var depot in neededDepots) {
-          var package = Package.Main;
-          if (ManifestData.depots.Contains(depot)) package = Package.Main;
-          else if (depot == ManifestData.GEHENNA) package = Package.Gehenna;
-          else if (depot == ManifestData.PROTOTYPE) package = Package.Prototype;
-
-          CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, package), delegate (long fileSize) {
+        foreach (var manifest in neededManifests) {
+          CopyAndOverwrite($"{depotLocation}/depot_{manifest.depotId}", GetFolder(version, manifest.package), delegate (long fileSize) {
             copied += fileSize;
             component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
           });
@@ -161,15 +154,15 @@ namespace TalosDownpatcher {
       long actualSize = GetFolderSize($"{Settings.Default.activeVersionLocation}");
 
       long expectedSize = 0;
-      expectedSize += manifestData.GetDownloadSize(version, Package.Main);
-      if (Settings.Default.ownsGehenna) expectedSize += manifestData.GetDownloadSize(version, Package.Gehenna);
-      if (Settings.Default.ownsPrototype) expectedSize += manifestData.GetDownloadSize(version, Package.Prototype);
+      expectedSize += ManifestData.GetDownloadSize(version, Package.Main);
+      if (Settings.Default.ownsGehenna) expectedSize += ManifestData.GetDownloadSize(version, Package.Gehenna);
+      if (Settings.Default.ownsPrototype) expectedSize += ManifestData.GetDownloadSize(version, Package.Prototype);
       Logging.Log("Actual: " + actualSize + " Expected: " + expectedSize + " IsFullyCopied: " + (actualSize >= expectedSize));
       return actualSize >= expectedSize;
     }
 
     public bool IsFullyDownloaded(int version, Package package) {
-      long expectedSize = manifestData.GetDownloadSize(version, package);
+      long expectedSize = ManifestData.GetDownloadSize(version, package);
       long actualSize = GetFolderSize(GetFolder(version, package));
       Logging.Log($"Package {package} for version {version} is {actualSize} bytes, expected {expectedSize}");
 

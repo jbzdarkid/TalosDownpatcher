@@ -15,10 +15,12 @@ namespace TalosDownpatcher {
       Thread.Sleep(100); // Slight delay for steam to become foreground
     }
 
-    public static void DownloadDepot(int depot, long manifest) {
-      Logging.Log($"download_depot {GAME_ID} {depot} {manifest}");
-      if (manifest == 0) return; // 0 indicates "No such manifest", so we shouldn't attempt to download it.
-      sim.Keyboard.TextEntry($"download_depot {GAME_ID} {depot} {manifest}");
+    public static void DownloadManifest(SteamManifest manifest) {
+      if (manifest is null) throw new System.ArgumentNullException(nameof(manifest));
+
+      string cmd = $"download_depot {manifest.appId} {manifest.depotId} {manifest.manifestId}";
+      Logging.Log(cmd);
+      sim.Keyboard.TextEntry(cmd);
       sim.Keyboard.KeyPress(VirtualKeyCode.RETURN);
     }
 
