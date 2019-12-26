@@ -16,7 +16,9 @@ namespace TalosDownpatcher {
     }
 
     public static void DownloadManifest(SteamManifest manifest) {
-      if (manifest is null) throw new System.ArgumentNullException(nameof(manifest));
+      if (manifest == null || manifest.appId == 0 || manifest.depotId == 0 || manifest.manifestId == 0) {
+        return;
+      }
 
       string cmd = $"download_depot {manifest.appId} {manifest.depotId} {manifest.manifestId}";
       Logging.Log(cmd);

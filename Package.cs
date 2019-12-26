@@ -2,7 +2,6 @@
   public enum Package {
     Main,
     Gehenna,
-    Prototype,
-    All
+    Prototype
   }
 }
