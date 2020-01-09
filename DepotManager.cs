@@ -88,13 +88,13 @@ namespace TalosDownpatcher {
 
         var neededManifests = new List<SteamManifest>();
         if (!IsFullyDownloaded(version, Package.Main)) {
-          foreach (var depot in ManifestData.depots) neededManifests.Add(manifestData[version, depot]);
+          neededManifests.AddRange(manifestData[version, Package.Main]);
         }
         if (Settings.Default.ownsGehenna && !IsFullyDownloaded(version, Package.Gehenna)) {
-          neededManifests.Add(manifestData[version, ManifestData.GEHENNA]);
+          neededManifests.AddRange(manifestData[version, Package.Gehenna]);
         }
         if (Settings.Default.ownsPrototype && !IsFullyDownloaded(version, Package.Prototype)) {
-          neededManifests.Add(manifestData[version, ManifestData.PROTOTYPE]);
+          neededManifests.AddRange(manifestData[version, Package.Prototype]);
         }
 
         double totalDownloadSize = 0;
@@ -132,12 +132,7 @@ namespace TalosDownpatcher {
 
         // @Performance: Start copying while downloads are in progress?
         foreach (var manifest in neededManifests) {
-          var package = Package.Main;
-          if (ManifestData.depots.Contains(manifest.depotId)) package = Package.Main;
-          else if (manifest.depotId == ManifestData.GEHENNA) package = Package.Gehenna;
-          else if (manifest.depotId == ManifestData.PROTOTYPE) package = Package.Prototype;
-
-          CopyAndOverwrite(manifest.location, GetFolder(version, package), delegate (long fileSize) {
+          CopyAndOverwrite(manifest.location, GetFolder(version, manifest.package), delegate (long fileSize) {
             copied += fileSize;
             component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
           });
@@ -218,7 +213,7 @@ namespace TalosDownpatcher {
     /// <param name="source">Source file path</param> 
     /// <param name="destination">Destination file path</param> 
     /// <param name="onCopyBytes">Callback to fire after copying bytes (used for progress bars)</param>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1005:Delegate invocation can be simplified.", Justification="The if check is relevant, as onCopyBytes may be null.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1005:Delegate invocation can be simplified.", Justification = "The if check is relevant, as onCopyBytes may be null.")]
     static void FCopy(string source, string destination, Action<long> onCopyBytes) {
       int buffSize = (1 << 20); // 1 MB
       byte[] buff = new byte[buffSize];
