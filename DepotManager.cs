@@ -90,19 +90,19 @@ namespace TalosDownpatcher {
           return;
         }
 
-        List<int> neededDepots = new List<int>();
+        var neededManifests = new List<SteamManifest>();
         if (!IsFullyDownloaded(version, Package.Main)) {
-          neededDepots.AddRange(ManifestData.depots);
+          foreach (var depot in ManifestData.depots) neededManifests.Add(manifestData[version, depot]);
         }
         if (Settings.Default.ownsGehenna && !IsFullyDownloaded(version, Package.Gehenna)) {
-          neededDepots.Add(ManifestData.GEHENNA);
+          neededManifests.Add(manifestData[version, ManifestData.GEHENNA]);
         }
         if (Settings.Default.ownsPrototype && !IsFullyDownloaded(version, Package.Prototype)) {
-          neededDepots.Add(ManifestData.PROTOTYPE);
+          neededManifests.Add(manifestData[version, ManifestData.PROTOTYPE]);
         }
 
         double totalDownloadSize = 0;
-        foreach (var depot in neededDepots) totalDownloadSize += manifestData[version, depot].size;
+        foreach (var manifest in neededManifests) totalDownloadSize += manifest.size;
 
         long freeSpace = drive.TotalFreeSpace;
         if (drive.TotalFreeSpace < totalDownloadSize) {
@@ -117,7 +117,7 @@ namespace TalosDownpatcher {
         { // Keep steam interaction close together, to avoid accidental user interference
           SteamCommand.OpenConsole();
           Thread.Sleep(10);
-          foreach (var depot in neededDepots) SteamCommand.DownloadDepot(depot, manifestData[version, depot].manifest);
+          foreach (var manifest in neededManifests) SteamCommand.DownloadDepot(manifest.appId, manifest.depotId, manifest.manifestId);
           MainWindow.SetForeground();
         }
 
@@ -125,7 +125,7 @@ namespace TalosDownpatcher {
 
         while (true) {
           long actualSize = 0;
-          foreach (var depot in neededDepots) actualSize += GetFolderSize($"{depotLocation}/depot_{depot}");
+          foreach (var manifest in neededManifests) actualSize += GetFolderSize($"{depotLocation}/depot_{manifest.depotId}");
           component.SetProgress(0.8 * actualSize / totalDownloadSize); // 80% - Downloading
           if (actualSize == totalDownloadSize) break;
           Thread.Sleep(1000);
@@ -135,13 +135,13 @@ namespace TalosDownpatcher {
         long copied = 0;
 
         // @Performance: Start copying while downloads are in progress?
-        foreach (var depot in neededDepots) {
+        foreach (var manifest in neededManifests) {
           var package = Package.Main;
-          if (ManifestData.depots.Contains(depot)) package = Package.Main;
-          else if (depot == ManifestData.GEHENNA) package = Package.Gehenna;
-          else if (depot == ManifestData.PROTOTYPE) package = Package.Prototype;
+          if (ManifestData.depots.Contains(manifest.depotId)) package = Package.Main;
+          else if (manifest.depotId == ManifestData.GEHENNA) package = Package.Gehenna;
+          else if (manifest.depotId == ManifestData.PROTOTYPE) package = Package.Prototype;
 
-          CopyAndOverwrite($"{depotLocation}/depot_{depot}", GetFolder(version, package), delegate (long fileSize) {
+          CopyAndOverwrite($"{depotLocation}/depot_{manifest.depotId}", GetFolder(version, package), delegate (long fileSize) {
             copied += fileSize;
             component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
           });
