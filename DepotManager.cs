@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,14 +10,11 @@ namespace TalosDownpatcher {
   public class DepotManager {
     private readonly ManifestData manifestData;
 
-    private readonly string depotLocation;
     private readonly object downloadLock = new object();
     private readonly object versionLock = new object();
 
     public DepotManager() {
       manifestData = new ManifestData();
-      string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
-      depotLocation = $"{steamInstall}/steamapps/content/app_257510";
     }
 
     public void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
@@ -84,7 +80,7 @@ namespace TalosDownpatcher {
         int version = component.version;
 
         Logging.Log($"Downloading depots for {version}");
-        var drive = new DriveInfo(new DirectoryInfo(depotLocation).Root.FullName);
+        var drive = new DriveInfo(new DirectoryInfo(ManifestData.DepotLocation).Root.FullName);
         if (!drive.IsReady) {
           Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
           return;
@@ -125,7 +121,7 @@ namespace TalosDownpatcher {
 
         while (true) {
           long actualSize = 0;
-          foreach (var manifest in neededManifests) actualSize += GetFolderSize($"{depotLocation}/depot_{manifest.depotId}");
+          foreach (var manifest in neededManifests) actualSize += GetFolderSize(manifest.location);
           component.SetProgress(0.8 * actualSize / totalDownloadSize); // 80% - Downloading
           if (actualSize == totalDownloadSize) break;
           Thread.Sleep(1000);
@@ -141,7 +137,7 @@ namespace TalosDownpatcher {
           else if (manifest.depotId == ManifestData.GEHENNA) package = Package.Gehenna;
           else if (manifest.depotId == ManifestData.PROTOTYPE) package = Package.Prototype;
 
-          CopyAndOverwrite($"{depotLocation}/depot_{manifest.depotId}", GetFolder(version, package), delegate (long fileSize) {
+          CopyAndOverwrite(manifest.location, GetFolder(version, package), delegate (long fileSize) {
             copied += fileSize;
             component.SetProgress(0.8 + 0.2 * (copied / totalDownloadSize)); // 20% - Copying
           });
@@ -149,7 +145,7 @@ namespace TalosDownpatcher {
 
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
           Logging.Log("Low on disk space, clearing download directory");
-          Directory.Delete(depotLocation, true);
+          Directory.Delete(ManifestData.DepotLocation, true);
         }
         component.State = VersionState.Downloaded;
       }

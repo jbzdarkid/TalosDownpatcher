@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using System.Collections.Generic;
 
 namespace TalosDownpatcher {
@@ -7,6 +8,7 @@ namespace TalosDownpatcher {
     public readonly long manifestId;
     public readonly int numFiles; // @Cleanup: Unused, but definitely should be (at least for validation).
     public readonly long size;
+    public readonly string location;
 
     public SteamManifest(int appId, int depotId, long manifestId, int numFiles, long size) {
       this.appId = appId;
@@ -14,6 +16,7 @@ namespace TalosDownpatcher {
       this.manifestId = manifestId;
       this.numFiles = numFiles;
       this.size = size;
+      this.location = $"{ManifestData.DepotLocation}/app_{appId}/depot_{depotId}";
     }
   }
 
@@ -32,6 +35,12 @@ namespace TalosDownpatcher {
     public static readonly int GEHENNA = 358470;
     public static readonly int PROTOTYPE = 322022;
     public static readonly List<int> depots = new List<int> {257516, 257519, 257511, 257515};
+
+    // TODO: Replace with readonly once we have a static constructor
+    private static string depotLocation;
+    public static string DepotLocation {
+      get { return depotLocation; }
+    }
 
     private Dictionary<int, Dictionary<int, SteamManifest>> data;
 
@@ -55,6 +64,9 @@ namespace TalosDownpatcher {
     }
 
     public ManifestData() {
+      string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
+      depotLocation = $"{steamInstall}/steamapps/content/app_257510";
+
       data = new Dictionary<int, Dictionary<int, SteamManifest>>();
       foreach (var version in allVersions) data[version] = new Dictionary<int, SteamManifest>();
 
