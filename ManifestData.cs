@@ -64,7 +64,7 @@ namespace TalosDownpatcher {
 
     public ManifestData() {
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
-      depotLocation = $"{steamInstall}/steamapps/content/app_257510";
+      depotLocation = $"{steamInstall}/steamapps/content";
 
       data = new Dictionary<int, Dictionary<Package, List<SteamManifest>>>();
       foreach (var version in allVersions) {
