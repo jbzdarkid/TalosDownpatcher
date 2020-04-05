@@ -18,7 +18,7 @@ namespace TalosDownpatcher {
       this.manifestId = manifestId;
       this.numFiles = numFiles;
       this.size = size;
-      this.location = $"{ManifestData.DepotLocation}/app_{appId}/depot_{depotId}";
+      this.location = $"{ManifestData.SteamApps}/content/app_{appId}/depot_{depotId}";
     }
   }
 
@@ -35,9 +35,9 @@ namespace TalosDownpatcher {
     };
 
     // TODO: Replace with readonly once we have a static constructor
-    private static string depotLocation;
-    public static string DepotLocation {
-      get { return depotLocation; }
+    private static string steamApps;
+    public static string SteamApps {
+      get { return steamApps; }
     }
 
     // @Cleanup
@@ -64,7 +64,7 @@ namespace TalosDownpatcher {
 
     public ManifestData() {
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
-      depotLocation = $"{steamInstall}/steamapps/content";
+      steamApps = $"{steamInstall}/steamapps";
 
       data = new Dictionary<int, Dictionary<Package, List<SteamManifest>>>();
       foreach (var version in allVersions) {

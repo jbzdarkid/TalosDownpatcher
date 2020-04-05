@@ -92,7 +92,7 @@ namespace TalosDownpatcher {
         int version = component.version;
 
         Logging.Log($"Downloading depots for {version}");
-        var drive = new DriveInfo(new DirectoryInfo(ManifestData.DepotLocation).Root.FullName);
+        var drive = new DriveInfo(new DirectoryInfo(ManifestData.SteamApps).Root.FullName);
         if (!drive.IsReady) {
           Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
           return;
@@ -152,7 +152,7 @@ namespace TalosDownpatcher {
 
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
           Logging.Log("Low on disk space, clearing download directory");
-          Directory.Delete(ManifestData.DepotLocation, true);
+          Directory.Delete(ManifestData.SteamApps + "/content", true);
         }
         component.State = VersionState.Downloaded;
       }

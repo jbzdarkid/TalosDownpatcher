@@ -29,10 +29,7 @@ namespace TalosDownpatcher {
 
     public static void StartModdableGame() {
       Logging.Log("Starting Moddable Talos");
-      // @HACK
-      string blah = ManifestData.DepotLocation;
-      blah = blah.Substring(0, blah.Length - 7) + "common/The Talos Principle/Bin/x64/Talos_Unrestricted.exe";
-      var procInfo = new ProcessStartInfo(blah) {
+      var procInfo = new ProcessStartInfo(ManifestData.SteamApps + "common/The Talos Principle/Bin/x64/Talos_Unrestricted.exe") {
         UseShellExecute = false
       };
       procInfo.EnvironmentVariables["SteamAppId"] = GAME_ID.ToString(CultureInfo.InvariantCulture);
