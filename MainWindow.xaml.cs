@@ -5,8 +5,6 @@ using System.Windows;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
-// TODO: Show uncommon versions if downloaded
-
 // TODO: Progress bar for downloading. This requires estimation of network speeds, which isn't *too* hard. But it's not fun.
 // TODO: Editor
 // TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully? Or, how do I communicate to the user that they should "give up"?
@@ -52,17 +50,9 @@ namespace TalosDownpatcher {
       }
       uiComponents.Clear();
 
-      List<int> versions;
-      if (Settings.Default.showAllVersions) {
-        versions = ManifestData.allVersions;
-      } else {
-        versions = ManifestData.commonVersions;
-      }
-      Height = 80 + versions.Count * 20;
-
-      for (int i = 0; i < versions.Count; i++) {
-        int version = versions[i];
-        uiComponents[version] = new VersionUIComponent(version, 30 + 20 * i, this);
+      this.Height = 80;
+      foreach (int version in ManifestData.allVersions) {
+        var uiComponent = new VersionUIComponent(version, this.Height-50, this);
 
         bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
         bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
@@ -72,20 +62,28 @@ namespace TalosDownpatcher {
           // We have everything we should
           if (version == Settings.Default.activeVersion) {
             if (depotManager.IsFullyCopied(version)) {
-              uiComponents[version].State = VersionState.Active;
+              uiComponent.State = VersionState.Active;
             } else {
               Settings.Default.activeVersion = 0;
               Settings.Default.Save();
             }
           } else {
-            uiComponents[version].State = VersionState.Downloaded;
+            uiComponent.State = VersionState.Downloaded;
           }
         } else if (hasMain || (Settings.Default.ownsGehenna && hasGehenna) || (Settings.Default.ownsPrototype && hasPrototype)) {
           // We don't have everything we should, but we do have *something*
-          uiComponents[version].State = VersionState.PartiallyDownloaded;
+          uiComponent.State = VersionState.PartiallyDownloaded;
         } else {
           // We have nothing
-          uiComponents[version].State = VersionState.NotDownloaded;
+          uiComponent.State = VersionState.NotDownloaded;
+        }
+
+        if (uiComponent.State != VersionState.NotDownloaded || ManifestData.commonVersions.Contains(version) || Settings.Default.showAllVersions) {
+          // Only add the version if it's downloaded, common, or we're showing all versions
+          uiComponents[version] = uiComponent;
+          this.Height += 20;
+        } else {
+          uiComponent.Dispose();
         }
       }
     }

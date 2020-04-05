@@ -63,7 +63,7 @@ namespace TalosDownpatcher {
     private TextBox stateBox;
     private Button actionButton;
 
-    public VersionUIComponent(int version, int yPos, MainWindow mainWindow) {
+    public VersionUIComponent(int version, double yPos, MainWindow mainWindow) {
       Contract.Requires(mainWindow != null);
       this.version = version;
       this.mainWindow = mainWindow;
