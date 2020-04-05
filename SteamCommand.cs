@@ -11,12 +11,12 @@ namespace TalosDownpatcher {
     private static readonly InputSimulator sim = new InputSimulator();
 
     public static void OpenConsole() {
+      Logging.Log("Opening steam console");
+      Process.Start("steam://open/console");
+      WaitForProcessToLaunch("Steam", 10);
       using (var memory = new Memory("steam")) {
         memory.FindAndReplace();
       }
-
-      Logging.Log("Opening steam console");
-      Process.Start("steam://nav/console");
       Thread.Sleep(100); // Slight delay for steam to become foreground
     }
 

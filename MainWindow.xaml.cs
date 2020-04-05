@@ -16,7 +16,6 @@ using TalosDownpatcher.Properties;
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
 // TODO: File chooser for version location?
-// TODO: Wait for steam.exe to launch?
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
