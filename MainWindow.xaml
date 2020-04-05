@@ -8,6 +8,8 @@
         Title="Talos Version Selector"
         Left="50" Top="50" Height="100" Width="300">
   <Grid x:Name="RootGrid">
+    <Label HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0, 0, 35, 0" Height="24" Width="160">Launch Moddable Version</Label>
+    <CheckBox HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0, 5, 35, 0" Name="LaunchModdable"></CheckBox>
     <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,5,0" Height="24" Width="24" Click="SettingsButton_OnClick">
       <Image HorizontalAlignment="Center" VerticalAlignment="Center" Height="24" Width="24" Source="Gear.png"/>
     </Button>

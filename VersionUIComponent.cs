@@ -1,11 +1,47 @@
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using TalosDownpatcher.Properties;
+
+public static class Utils {
+  /// TODO: Find a real home for this
+  /// <summary>
+  /// Removes all event handlers subscribed to the specified routed event from the specified element.
+  /// https://stackoverflow.com/a/16392387
+  /// </summary>
+  /// <param name="element">The UI element on which the routed event is defined.</param>
+  /// <param name="routedEvent">The routed event for which to remove the event handlers.</param>
+  public static void RemoveRoutedEventHandlers(UIElement element, RoutedEvent routedEvent) {
+    if (element == null) return;
+
+    // Get the EventHandlersStore instance which holds event handlers for the specified element.
+    // The EventHandlersStore class is declared as internal.
+    var eventHandlersStoreProperty = typeof(UIElement).GetProperty(
+        "EventHandlersStore", BindingFlags.Instance | BindingFlags.NonPublic);
+    object eventHandlersStore = eventHandlersStoreProperty.GetValue(element, null);
+
+    if (eventHandlersStore == null) return;
+
+    // Invoke the GetRoutedEventHandlers method on the EventHandlersStore instance 
+    // for getting an array of the subscribed event handlers.
+    var getRoutedEventHandlers = eventHandlersStore.GetType().GetMethod(
+        "GetRoutedEventHandlers", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    var routedEventHandlers = (RoutedEventHandlerInfo[])getRoutedEventHandlers.Invoke(
+        eventHandlersStore, new object[] { routedEvent });
+
+    // Iteratively remove all routed event handlers from the element.
+    foreach (var routedEventHandler in routedEventHandlers) {
+      element.RemoveHandler(routedEvent, routedEventHandler.Handler);
+    }
+  }
+};
 
 namespace TalosDownpatcher {
   public enum VersionState {
@@ -67,7 +103,6 @@ namespace TalosDownpatcher {
       actionButton.VerticalAlignment = VerticalAlignment.Top;
       actionButton.Height = 21;
       actionButton.Width = 71;
-      actionButton.Click += Button_Click;
       actionButton.Margin = new Thickness(180, yPos, 0, 0);
       mainWindow.RootGrid.Children.Add(actionButton);
 
@@ -109,59 +144,88 @@ namespace TalosDownpatcher {
         mainWindow.Dispatcher.Invoke(delegate {
           switch (state) {
             case VersionState.NotDownloaded:
-              actionButton.Content = "Download";
               stateBox.Text = "Not Downloaded";
+              Foo(actionButton, "Download", delegate (VersionUIComponent component) {
+                mainWindow.depotManager.DownloadDepots(component);
+              });
               break;
             case VersionState.PartiallyDownloaded:
-              actionButton.Content = "Redownload";
               stateBox.Text = "Partially Downloaded";
+              Foo(actionButton, "Redownload", delegate (VersionUIComponent component) {
+                mainWindow.depotManager.DownloadDepots(component);
+              });
               break;
             case VersionState.DownloadPending:
-              actionButton.Content = "Set Active";
-              actionButton.IsEnabled = false;
               stateBox.Text = "Download Pending";
+              Foo(actionButton, "Set Active", null);
               break;
             case VersionState.Downloading:
-              actionButton.Content = "Set Active";
-              actionButton.IsEnabled = false;
               stateBox.Text = "Downloading";
+              Foo(actionButton, "Set Active", null);
               break;
             case VersionState.Saving:
-              actionButton.Content = "Set Active";
-              actionButton.IsEnabled = false;
               stateBox.Text = "Saving";
+              Foo(actionButton, "Set Active", null);
               break;
             case VersionState.Downloaded:
               SetProgress(0.0);
-              actionButton.Content = "Set Active";
-              actionButton.IsEnabled = true;
               stateBox.Text = "Downloaded";
+
+              Foo(actionButton, "Set Active", delegate (VersionUIComponent component) {
+                // This seems hacky. I hope it will improve when I move this back to mainwindow.
+                mainWindow.depotManager.SetActiveVersion(component, delegate {
+                  // Mark the current active version as inactive. Delayed to account for queueing.
+                  int activeVersion = Settings.Default.activeVersion;
+                  if (mainWindow.uiComponents.ContainsKey(activeVersion)) mainWindow.uiComponents[activeVersion].State = VersionState.Downloaded;
+                });
+              });
               break;
             case VersionState.CopyPending:
-              actionButton.Content = "Play";
-              actionButton.IsEnabled = false;
               stateBox.Text = "Copy Pending";
+              Foo(actionButton, "Play", null);
               break;
             case VersionState.Copying:
-              actionButton.Content = "Play";
-              actionButton.IsEnabled = false;
               stateBox.Text = "Copying";
+              Foo(actionButton, "Play", null);
               break;
             case VersionState.Active:
               SetProgress(0.0);
-              actionButton.Content = "Play";
-              actionButton.IsEnabled = true;
               stateBox.Text = "Active";
+
+              Foo(actionButton, "Play", delegate (VersionUIComponent component) {
+                mainWindow.Dispatcher.Invoke(delegate {
+                  // HACK :(
+                  bool launchModdable = (mainWindow.LaunchModdable.IsChecked == true);
+                  if (component.version <= 249740) {
+                    // Launch a separate, elevated process to change the date
+                    var processPath = Process.GetCurrentProcess().MainModule.FileName;
+                    Process.Start(new ProcessStartInfo(processPath) {
+                      Verb = "runas",
+                      Arguments = "LaunchOldVersion" + (launchModdable ? " Moddable" : ""),
+                    });
+                  } else if (launchModdable) {
+                    SteamCommand.StartModdableGame();
+                  } else {
+                    SteamCommand.StartGame();
+                  }
+                });
+              });
               break;
           }
         });
       }
     }
 
-    private void Button_Click(object sender, RoutedEventArgs e) {
-      var thread = new Thread(() => { mainWindow.VersionButtonOnClick(this); });
-      thread.IsBackground = true;
-      thread.Start();
+    private void Foo(Button button, string content, Action<VersionUIComponent> onClick) {
+      button.Content = content;
+      button.IsEnabled = (onClick != null);
+      Utils.RemoveRoutedEventHandlers(button, Button.ClickEvent);
+      button.Click += delegate (object sender, RoutedEventArgs e) {
+        // Note: The action is executed on a background thread, so it must not interact with anything from the main window
+        var thread = new Thread(() => { onClick(this); });
+        thread.IsBackground = true;
+        thread.Start();
+      };
     }
 
     #region IDisposable Support

@@ -6,10 +6,11 @@ using System.Windows;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
+// TODO: Show uncommon versions if downloaded
+
 // TODO: Progress bar for downloading. This requires estimation of network speeds, which isn't *too* hard. But it's not fun.
 // TODO: Editor
 // TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully? Or, how do I communicate to the user that they should "give up"?
-// TODO: Show uncommon versions if downloaded
 // TODO: Potentially integrate with SteamWorks to determine install path / DLC status / Game launch status
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
@@ -18,10 +19,17 @@ using TalosDownpatcher.Properties;
 // TODO: File chooser for version location?
 // TODO: Wait for steam.exe to launch?
 
+// To make apple happy:
+// - /path/to/downpatcher.exe %command% (steam direct launch option)
+// - Symlinks (https://github.com/apple1417/LegacyWorkshopLoader/blob/master/SymlinkWindows.cs)
+// - (of course) Automatic detection of steam version w/ copy
+// - (Editor, if possible. If I add a steam.exe hack, then think about this.)
+
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
+    // TODO: Audit protection levels
     public DepotManager depotManager = new DepotManager();
-    private Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
+    public Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
 
     public MainWindow() {
@@ -53,11 +61,12 @@ namespace TalosDownpatcher {
       } else {
         versions = ManifestData.commonVersions;
       }
-      Height = 50 + versions.Count * 20;
+      Height = 80 + versions.Count * 20;
 
+      Settings.Default.activeVersion = 326589;
       for (int i = 0; i < versions.Count; i++) {
         int version = versions[i];
-        uiComponents[version] = new VersionUIComponent(version, 20 * i, this);
+        uiComponents[version] = new VersionUIComponent(version, 30 + 20 * i, this);
 
         bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
         bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
@@ -102,16 +111,6 @@ namespace TalosDownpatcher {
           });
           break;
         case VersionState.Active:
-          if (component.version <= 249740) {
-            // Launch a separate, elevated process to change the date
-            var processPath = Process.GetCurrentProcess().MainModule.FileName;
-            Process.Start(new ProcessStartInfo(processPath) {
-              Verb = "runas",
-              Arguments = "LaunchOldVersion",
-            });
-          } else {
-            SteamCommand.StartGame();
-          }
           break;
       }
     }
