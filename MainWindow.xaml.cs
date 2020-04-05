@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Windows;
 using System.Windows.Threading;
@@ -27,9 +26,8 @@ using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
-    // TODO: Audit protection levels
-    public DepotManager depotManager = new DepotManager();
-    public Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
+    internal DepotManager depotManager = new DepotManager();
+    internal Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
 
     public MainWindow() {
@@ -63,7 +61,6 @@ namespace TalosDownpatcher {
       }
       Height = 80 + versions.Count * 20;
 
-      Settings.Default.activeVersion = 326589;
       for (int i = 0; i < versions.Count; i++) {
         int version = versions[i];
         uiComponents[version] = new VersionUIComponent(version, 30 + 20 * i, this);

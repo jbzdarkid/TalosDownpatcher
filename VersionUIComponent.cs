@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Reflection;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -139,76 +138,83 @@ namespace TalosDownpatcher {
         return state;
       }
       set {
-        Logging.Log($"Changing state for UIComponent {version} from {state} to {value}");
-        state = value;
         mainWindow.Dispatcher.Invoke(delegate {
+          // Since this touches a *lot* of UI state, we should just handle it on the main thread.
+          // Actions which need to happen on background threads *should enforce this themselves*
+          Logging.Log($"Changing state for UIComponent {version} from {state} to {value}");
+          state = value;
           switch (state) {
             case VersionState.NotDownloaded:
               stateBox.Text = "Not Downloaded";
-              Foo(actionButton, "Download", delegate (VersionUIComponent component) {
-                mainWindow.depotManager.DownloadDepots(component);
+              actionButton.Content = "Download";
+              SetOnClick(actionButton, delegate {
+                mainWindow.depotManager.DownloadDepots(this);
               });
               break;
             case VersionState.PartiallyDownloaded:
               stateBox.Text = "Partially Downloaded";
-              Foo(actionButton, "Redownload", delegate (VersionUIComponent component) {
-                mainWindow.depotManager.DownloadDepots(component);
+              actionButton.Content = "Redownload";
+              SetOnClick(actionButton, delegate {
+                mainWindow.depotManager.DownloadDepots(this);
               });
               break;
             case VersionState.DownloadPending:
               stateBox.Text = "Download Pending";
-              Foo(actionButton, "Set Active", null);
+              actionButton.Content = "Set Active";
+              SetOnClick(actionButton, null);
               break;
             case VersionState.Downloading:
               stateBox.Text = "Downloading";
-              Foo(actionButton, "Set Active", null);
+              actionButton.Content = "Set Active";
+              SetOnClick(actionButton, null);
               break;
             case VersionState.Saving:
               stateBox.Text = "Saving";
-              Foo(actionButton, "Set Active", null);
+              actionButton.Content = "Set Active";
+              SetOnClick(actionButton, null);
               break;
             case VersionState.Downloaded:
               SetProgress(0.0);
               stateBox.Text = "Downloaded";
-
-              Foo(actionButton, "Set Active", delegate (VersionUIComponent component) {
-                // This seems hacky. I hope it will improve when I move this back to mainwindow.
-                mainWindow.depotManager.SetActiveVersion(component, delegate {
+              actionButton.Content = "Set Active";
+              SetOnClick(actionButton, delegate {
+                mainWindow.depotManager.SetActiveVersion(this, delegate {
                   // Mark the current active version as inactive. Delayed to account for queueing.
                   int activeVersion = Settings.Default.activeVersion;
-                  if (mainWindow.uiComponents.ContainsKey(activeVersion)) mainWindow.uiComponents[activeVersion].State = VersionState.Downloaded;
+                  if (mainWindow.uiComponents.ContainsKey(activeVersion)) {
+                    mainWindow.uiComponents[activeVersion].State = VersionState.Downloaded;
+                  }
                 });
               });
               break;
             case VersionState.CopyPending:
               stateBox.Text = "Copy Pending";
-              Foo(actionButton, "Play", null);
+              actionButton.Content = "Play";
+              SetOnClick(actionButton, null);
               break;
             case VersionState.Copying:
               stateBox.Text = "Copying";
-              Foo(actionButton, "Play", null);
+              actionButton.Content = "Play";
+              SetOnClick(actionButton, null);
               break;
             case VersionState.Active:
               SetProgress(0.0);
               stateBox.Text = "Active";
-
-              Foo(actionButton, "Play", delegate (VersionUIComponent component) {
-                mainWindow.Dispatcher.Invoke(delegate {
-                  // HACK :(
-                  bool launchModdable = (mainWindow.LaunchModdable.IsChecked == true);
-                  if (component.version <= 249740) {
-                    // Launch a separate, elevated process to change the date
-                    var processPath = Process.GetCurrentProcess().MainModule.FileName;
-                    Process.Start(new ProcessStartInfo(processPath) {
-                      Verb = "runas",
-                      Arguments = "LaunchOldVersion" + (launchModdable ? " Moddable" : ""),
-                    });
-                  } else if (launchModdable) {
-                    SteamCommand.StartModdableGame();
-                  } else {
-                    SteamCommand.StartGame();
-                  }
-                });
+              actionButton.Content = "Play";
+              SetOnClick(actionButton, delegate {
+                bool launchModdable = (mainWindow.LaunchModdable.IsChecked == true);
+                if (this.version <= 249740) {
+                  // Launch a separate, elevated process to change the date
+                  var processPath = Process.GetCurrentProcess().MainModule.FileName;
+                  Process.Start(new ProcessStartInfo(processPath) {
+                    Verb = "runas",
+                    Arguments = "LaunchOldVersion" + (launchModdable ? " Moddable" : ""),
+                  });
+                } else if (launchModdable) {
+                  SteamCommand.StartModdableGame();
+                } else {
+                  SteamCommand.StartGame();
+                }
               });
               break;
           }
@@ -216,15 +222,11 @@ namespace TalosDownpatcher {
       }
     }
 
-    private void Foo(Button button, string content, Action<VersionUIComponent> onClick) {
-      button.Content = content;
+    private static void SetOnClick(Button button, Action onClick) {
       button.IsEnabled = (onClick != null);
       Utils.RemoveRoutedEventHandlers(button, Button.ClickEvent);
       button.Click += delegate (object sender, RoutedEventArgs e) {
-        // Note: The action is executed on a background thread, so it must not interact with anything from the main window
-        var thread = new Thread(() => { onClick(this); });
-        thread.IsBackground = true;
-        thread.Start();
+        onClick();
       };
     }
 
@@ -254,3 +256,4 @@ namespace TalosDownpatcher {
     #endregion
   }
 }
+ 

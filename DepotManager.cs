@@ -18,6 +18,12 @@ namespace TalosDownpatcher {
     }
 
     public void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
+      var thread = new Thread(() => { SetActiveVersionInternal(component, onSetActiveVersion); });
+      thread.IsBackground = true;
+      thread.Start();
+    }
+    
+    private void SetActiveVersionInternal(VersionUIComponent component, Action onSetActiveVersion) {
       Contract.Requires(component != null && onSetActiveVersion != null);
       string activeVersionLocation = Settings.Default.activeVersionLocation;
 
@@ -35,7 +41,7 @@ namespace TalosDownpatcher {
         Settings.Default.activeVersion = 0;
         Settings.Default.Save();
 
-        // Carefully clean target folder before copying
+        // Clean target folder before copying
         try {
           Directory.Delete(activeVersionLocation, true);
         } catch (DirectoryNotFoundException) {
@@ -74,6 +80,12 @@ namespace TalosDownpatcher {
     }
 
     public void DownloadDepots(VersionUIComponent component) {
+      var thread = new Thread(() => { DownloadDepotsInternal(component); });
+      thread.IsBackground = true;
+      thread.Start();
+    }
+
+    private void DownloadDepotsInternal(VersionUIComponent component) {
       Contract.Requires(component != null);
       component.State = VersionState.DownloadPending; // Pending until we lock
       lock (downloadLock) {

@@ -11,6 +11,10 @@ namespace TalosDownpatcher {
     private static readonly InputSimulator sim = new InputSimulator();
 
     public static void OpenConsole() {
+      using (var memory = new Memory("steam")) {
+        memory.FindAndReplace();
+      }
+
       Logging.Log("Opening steam console");
       Process.Start("steam://nav/console");
       Thread.Sleep(100); // Slight delay for steam to become foreground
@@ -25,6 +29,7 @@ namespace TalosDownpatcher {
 
     public static void StartModdableGame() {
       Logging.Log("Starting Moddable Talos");
+      // @HACK
       string blah = ManifestData.DepotLocation;
       blah = blah.Substring(0, blah.Length - 7) + "common/The Talos Principle/Bin/x64/Talos_Unrestricted.exe";
       var procInfo = new ProcessStartInfo(blah) {
