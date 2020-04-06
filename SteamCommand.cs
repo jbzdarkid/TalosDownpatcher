@@ -47,13 +47,13 @@ namespace TalosDownpatcher {
     private static bool WaitForProcessToLaunch(string processName, int seconds) {
       // Wait for talos to launch (10s max) before returning
       for (var i=0; i<seconds; i++) {
-        Thread.Sleep(1000);
         foreach (var process in Process.GetProcesses()) {
           if (process.ProcessName == processName) {
             Logging.Log($"{processName} started");
             return true;
           }
         }
+        Thread.Sleep(1000);
       }
       Logging.Log($"{processName} not started, not waiting any longer");
       return false;
