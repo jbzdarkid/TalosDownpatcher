@@ -202,15 +202,14 @@ namespace TalosDownpatcher {
               stateBox.Text = "Active";
               actionButton.Content = "Play";
               SetOnClick(actionButton, delegate {
-                bool launchModdable = (mainWindow.LaunchModdable.IsChecked == true);
                 if (this.version <= 249740) {
                   // Launch a separate, elevated process to change the date
                   var processPath = Process.GetCurrentProcess().MainModule.FileName;
                   Process.Start(new ProcessStartInfo(processPath) {
                     Verb = "runas",
-                    Arguments = "LaunchOldVersion" + (launchModdable ? " Moddable" : ""),
+                    Arguments = "LaunchOldVersion" + (Settings.Default.launchModdable ? " Moddable" : ""),
                   });
-                } else if (launchModdable) {
+                } else if (Settings.Default.launchModdable) {
                   SteamCommand.StartModdableGame();
                 } else {
                   SteamCommand.StartGame();

@@ -15,10 +15,12 @@ namespace TalosDownpatcher {
       AllVersionsCheckbox.IsChecked = settings.showAllVersions;
       GehennaCheckbox.IsChecked = settings.ownsGehenna;
       PrototypeCheckbox.IsChecked = settings.ownsPrototype;
+      LaunchModdable.IsChecked = settings.launchModdable;
 
       AllVersionsLabel.PreviewMouseDown += delegate { AllVersionsCheckbox.IsChecked = !AllVersionsCheckbox.IsChecked; };
       GehennaLabel.PreviewMouseDown += delegate { GehennaCheckbox.IsChecked = !GehennaCheckbox.IsChecked; };
       PrototypeLabel.PreviewMouseDown += delegate { PrototypeCheckbox.IsChecked = !PrototypeCheckbox.IsChecked; };
+      ModdableLabel.PreviewMouseDown += delegate { LaunchModdable.IsChecked = !LaunchModdable.IsChecked; };
     }
 
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
@@ -34,6 +36,7 @@ namespace TalosDownpatcher {
       settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;
       settings.ownsGehenna = (bool)GehennaCheckbox.IsChecked;
       settings.ownsPrototype = (bool)PrototypeCheckbox.IsChecked;
+      settings.launchModdable = (bool)LaunchModdable.IsChecked;
 
       if (!string.IsNullOrWhiteSpace(ActiveBox.Text)) {
         var dir = new DirectoryInfo(ActiveBox.Text);
@@ -59,6 +62,7 @@ namespace TalosDownpatcher {
       AllVersionsCheckbox.IsChecked = false;
       GehennaCheckbox.IsChecked = false;
       PrototypeCheckbox.IsChecked = false;
+      LaunchModdable.IsChecked = false;
     }
   }
 }

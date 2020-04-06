@@ -94,5 +94,17 @@ namespace TalosDownpatcher.Properties {
                 this["ownsPrototype"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool launchModdable {
+            get {
+                return ((bool)(this["launchModdable"]));
+            }
+            set {
+                this["launchModdable"] = value;
+            }
+        }
     }
 }

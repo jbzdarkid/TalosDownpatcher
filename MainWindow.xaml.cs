@@ -50,9 +50,9 @@ namespace TalosDownpatcher {
       }
       uiComponents.Clear();
 
-      this.Height = 80;
+      this.Height = 50;
       foreach (int version in ManifestData.allVersions) {
-        var uiComponent = new VersionUIComponent(version, this.Height-50, this);
+        var uiComponent = new VersionUIComponent(version, this.Height - 50, this);
 
         bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
         bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
