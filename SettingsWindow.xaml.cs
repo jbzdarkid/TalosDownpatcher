@@ -7,7 +7,7 @@ namespace TalosDownpatcher {
     private readonly Settings settings = Settings.Default;
     private readonly MainWindow mainWindow;
 
-    public SettingsWindow(MainWindow mainWindow) {
+    public SettingsWindow(MainWindow mainWindow, bool showHiddenSettings) {
       this.mainWindow = mainWindow;
       InitializeComponent();
       ActiveBox.Text = settings.activeVersionLocation;
@@ -16,11 +16,19 @@ namespace TalosDownpatcher {
       GehennaCheckbox.IsChecked = settings.ownsGehenna;
       PrototypeCheckbox.IsChecked = settings.ownsPrototype;
       LaunchModdable.IsChecked = settings.launchModdable;
+      UseSymlinks.IsChecked = settings.useSymlinks;
 
       AllVersionsLabel.PreviewMouseDown += delegate { AllVersionsCheckbox.IsChecked = !AllVersionsCheckbox.IsChecked; };
       GehennaLabel.PreviewMouseDown += delegate { GehennaCheckbox.IsChecked = !GehennaCheckbox.IsChecked; };
       PrototypeLabel.PreviewMouseDown += delegate { PrototypeCheckbox.IsChecked = !PrototypeCheckbox.IsChecked; };
       ModdableLabel.PreviewMouseDown += delegate { LaunchModdable.IsChecked = !LaunchModdable.IsChecked; };
+      SymlinkLabel.PreviewMouseDown += delegate { UseSymlinks.IsChecked = !UseSymlinks.IsChecked; };
+
+      if (showHiddenSettings) {
+        UseSymlinks.Visibility = Visibility.Visible;
+      } else {
+        UseSymlinks.Visibility = Visibility.Hidden;
+      }
     }
 
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
@@ -37,6 +45,7 @@ namespace TalosDownpatcher {
       settings.ownsGehenna = (bool)GehennaCheckbox.IsChecked;
       settings.ownsPrototype = (bool)PrototypeCheckbox.IsChecked;
       settings.launchModdable = (bool)LaunchModdable.IsChecked;
+      settings.useSymlinks = (bool)UseSymlinks.IsChecked;
 
       if (!string.IsNullOrWhiteSpace(ActiveBox.Text)) {
         var dir = new DirectoryInfo(ActiveBox.Text);
@@ -63,6 +72,7 @@ namespace TalosDownpatcher {
       GehennaCheckbox.IsChecked = false;
       PrototypeCheckbox.IsChecked = false;
       LaunchModdable.IsChecked = false;
+      UseSymlinks.IsChecked = false;
     }
   }
 }

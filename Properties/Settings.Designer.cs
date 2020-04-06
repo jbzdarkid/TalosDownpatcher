@@ -106,5 +106,17 @@ namespace TalosDownpatcher.Properties {
                 this["launchModdable"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool useSymlinks {
+            get {
+                return ((bool)(this["useSymlinks"]));
+            }
+            set {
+                this["useSymlinks"] = value;
+            }
+        }
     }
 }

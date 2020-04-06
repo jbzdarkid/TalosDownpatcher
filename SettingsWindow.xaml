@@ -13,12 +13,14 @@
 		<Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,50,0,0" Name="AllVersionsLabel" Content="Show less commonly used versions"/>
 		<Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220,50,0,0" Name="GehennaLabel" Content="Download Gehenna"/>
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="360,50,0,0" Name="PrototypeLabel" Content="Download Prototype"/>
+    <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="505,50,0,0" Name="SymlinkLabel" Content="Use Symlinks"/>
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,75,0,0" Name="ModdableLabel" Content="Launch Moddable Version"/>
     <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="120,4,0,0" Name="ActiveBox" Height="20" Width="500"/>
     <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="140,29,0,0" Name="InactiveBox" Height="20" Width="480"/>
 		<CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="195,56,0,0" Name="AllVersionsCheckbox"/>
 		<CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="335,56,0,0" Name="GehennaCheckbox"/>
     <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="480,56,0,0" Name="PrototypeCheckbox"/>
+    <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="585,56,0,0" Name="UseSymlinks"/>
     <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="145,81,0,0" Name="LaunchModdable"/>
     <Button VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="5,0,0,10" Content="Restore Defaults" Click="ButtonDefault_Click"/>
     <Button VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,5,10" Content="Save and Close" Click="ButtonSave_Click"/>

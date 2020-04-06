@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
@@ -30,6 +31,7 @@ namespace TalosDownpatcher {
     public MainWindow() {
       InitializeComponent();
       LoadVersions();
+      DetectSteamInstall();
       dispatcher = Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
@@ -88,6 +90,10 @@ namespace TalosDownpatcher {
       }
     }
 
+    private void DetectSteamInstall() {
+      // TODO.
+    }
+
     // This function is always called on a background thread.
     public void VersionButtonOnClick(VersionUIComponent component) {
       Contract.Requires(component != null);
@@ -109,10 +115,10 @@ namespace TalosDownpatcher {
       }
     }
 
-    private void SettingsButton_OnClick(object sender, RoutedEventArgs e) {
+    private void SettingsButton_MouseDown(object sender, MouseButtonEventArgs e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
         Logging.Log("Showing settings window");
-        settingsWindow = new SettingsWindow(this);
+        settingsWindow = new SettingsWindow(this, e.RightButton == MouseButtonState.Pressed);
         settingsWindow.Show();
         settingsWindow.Activate();
       } else {
@@ -133,6 +139,11 @@ namespace TalosDownpatcher {
         var mainWindow = (MainWindow)Application.Current.MainWindow;
         mainWindow.Activate();
       });
+    }
+
+    private void Button_MouseDown(object sender, MouseButtonEventArgs e) {
+      bool isRMB = (e.ChangedButton == MouseButton.Right);
+
     }
   }
 }
