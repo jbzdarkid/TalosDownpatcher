@@ -26,8 +26,10 @@ namespace TalosDownpatcher {
 
       if (showHiddenSettings) {
         UseSymlinks.Visibility = Visibility.Visible;
+        SymlinkLabel.Visibility = Visibility.Visible;
       } else {
         UseSymlinks.Visibility = Visibility.Hidden;
+        SymlinkLabel.Visibility = Visibility.Hidden;
       }
     }
 

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
@@ -115,10 +116,12 @@ namespace TalosDownpatcher {
       }
     }
 
-    private void SettingsButton_MouseDown(object sender, MouseButtonEventArgs e) {
+    private void SettingsButton_Click(object sender, object e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
         Logging.Log("Showing settings window");
-        settingsWindow = new SettingsWindow(this, e.RightButton == MouseButtonState.Pressed);
+        // Because, for some reason, I need two handlers for lmb and rmb.
+        bool isRmb = typeof(MouseButtonEventArgs).IsInstanceOfType(e) && ((MouseButtonEventArgs)e).ChangedButton == MouseButton.Right;
+        settingsWindow = new SettingsWindow(this, isRmb);
         settingsWindow.Show();
         settingsWindow.Activate();
       } else {
@@ -139,11 +142,6 @@ namespace TalosDownpatcher {
         var mainWindow = (MainWindow)Application.Current.MainWindow;
         mainWindow.Activate();
       });
-    }
-
-    private void Button_MouseDown(object sender, MouseButtonEventArgs e) {
-      bool isRMB = (e.ChangedButton == MouseButton.Right);
-
     }
   }
 }
