@@ -118,5 +118,17 @@ namespace TalosDownpatcher.Properties {
                 this["useSymlinks"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool steamHack {
+            get {
+                return ((bool)(this["steamHack"]));
+            }
+            set {
+                this["steamHack"] = value;
+            }
+        }
     }
 }

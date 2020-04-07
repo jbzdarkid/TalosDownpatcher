@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading;
 using TalosDownpatcher.Properties;
 
@@ -92,7 +94,7 @@ namespace TalosDownpatcher {
         int version = component.version;
 
         Logging.Log($"Downloading depots for {version}");
-        var drive = new DriveInfo(new DirectoryInfo(ManifestData.SteamApps).Root.FullName);
+        var drive = new DriveInfo(new DirectoryInfo(ManifestData.DepotLocation).Root.FullName);
         if (!drive.IsReady) {
           Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
           return;
@@ -152,10 +154,26 @@ namespace TalosDownpatcher {
 
         if (drive.TotalFreeSpace < 5 * totalDownloadSize) {
           Logging.Log("Low on disk space, clearing download directory");
-          Directory.Delete(ManifestData.SteamApps + "/content", true);
+          Directory.Delete(ManifestData.DepotLocation, true);
         }
         component.State = VersionState.Downloaded;
       }
+    }
+
+    public void SaveActiveVersion(int version) {
+      var thread = new Thread(() => { SaveActiveVersionInternal(version); });
+      thread.IsBackground = true;
+      thread.Start();
+    }
+
+    private void SaveActiveVersionInternal(int version) {
+      // Copy all files to Old Versions/<version>
+      // *move* all files matching Content/Talos/DLC_01_Road_To_Gehenna* into _Gehenna
+      // *move* all files matching Content/Talos/DLC_Prototype* into _Prototype
+
+      // ManifestData.
+      // FCopy()
+
     }
 
     // *** Utilities ***
@@ -177,6 +195,44 @@ namespace TalosDownpatcher {
       Logging.Log($"Package {package} for version {version} is {actualSize} bytes, expected {expectedSize}");
 
       return expectedSize == actualSize;
+    }
+
+    private static int Find(byte[] data, byte[] search, int startIndex = 0) {
+      for (int i = startIndex; i < data.Length - search.Length; i++) {
+        bool match = true;
+        for (int j = 0; j < search.Length; j++) {
+          if (data[i + j] == search[j]) {
+            continue;
+          }
+          match = false;
+          break;
+        }
+        if (match) return i;
+      }
+      return -1;
+    }
+
+    public static int GetInstalledVersion() {
+      var talos = new FileInfo(Settings.Default.activeVersionLocation + "/Bin/x64/Talos.exe");
+      if (!talos.Exists) {
+        talos = new FileInfo(Settings.Default.activeVersionLocation + "/Bin/Talos.exe");
+      }
+      if (!talos.Exists) return 0;
+      int buffSize = (1 << 20); // 1 MB
+      byte[] buff = new byte[buffSize];
+      using (FileStream fsread = talos.OpenRead()) {
+        using (BinaryReader bwread = new BinaryReader(fsread)) {
+          for (;;) {
+            int readBytes = bwread.Read(buff, 0, buffSize);
+            if (readBytes == 0) break;
+            int index = Find(buff, Encoding.ASCII.GetBytes("Talos-Windows-Final"));
+            if (index != -1) {
+              return int.Parse(Encoding.ASCII.GetString(buff, index + 21, 6), CultureInfo.InvariantCulture);
+            }
+          }
+        }
+      }
+      return 0;
     }
 
     private static string GetFolder(int version, Package package) {

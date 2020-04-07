@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
+using TalosDownpatcher.Properties;
 using WindowsInput;
 using WindowsInput.Native;
 
@@ -14,9 +15,14 @@ namespace TalosDownpatcher {
       Logging.Log("Opening steam console");
       Process.Start("steam://open/console");
       WaitForProcessToLaunch("Steam", 10);
-      // using (var memory = new Memory("steam")) {
-      //   memory.FindAndReplace();
-      // }
+      if (Settings.Default.steamHack) {
+        using (var memory = new Memory("steam")) {
+          memory.FindAndReplace(
+            new byte[] { 0xFF, 0xD0, 0x84, 0xC0, 0x0F, 0x85, 0x2E, 0xFF, 0xFF, 0xFF },
+            new byte[] { 0xFF, 0xD0, 0x84, 0xC0, 0x90, 0xE9, 0x2E, 0xFF, 0xFF, 0xFF }
+          );
+        }
+      }
       Thread.Sleep(100); // Slight delay for steam to become foreground
     }
 
@@ -29,7 +35,8 @@ namespace TalosDownpatcher {
 
     public static void StartModdableGame() {
       Logging.Log("Starting Moddable Talos");
-      var procInfo = new ProcessStartInfo(ManifestData.SteamApps + "common/The Talos Principle/Bin/x64/Talos_Unrestricted.exe") {
+      
+      var procInfo = new ProcessStartInfo(Settings.Default.activeVersionLocation + "/Bin/x64/Talos_Unrestricted.exe") {
         UseShellExecute = false
       };
       procInfo.EnvironmentVariables["SteamAppId"] = GAME_ID.ToString(CultureInfo.InvariantCulture);

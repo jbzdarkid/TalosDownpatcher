@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -32,7 +33,7 @@ namespace TalosDownpatcher {
     public MainWindow() {
       InitializeComponent();
       LoadVersions();
-      DetectSteamInstall();
+      DetermineActiveVersion();
       dispatcher = Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
@@ -63,16 +64,7 @@ namespace TalosDownpatcher {
 
         if (hasMain && (!Settings.Default.ownsGehenna || hasGehenna) && (!Settings.Default.ownsPrototype || hasPrototype)) {
           // We have everything we should
-          if (version == Settings.Default.activeVersion) {
-            if (depotManager.IsFullyCopied(version)) {
-              uiComponent.State = VersionState.Active;
-            } else {
-              Settings.Default.activeVersion = 0;
-              Settings.Default.Save();
-            }
-          } else {
-            uiComponent.State = VersionState.Downloaded;
-          }
+          uiComponent.State = VersionState.Downloaded;
         } else if (hasMain || (Settings.Default.ownsGehenna && hasGehenna) || (Settings.Default.ownsPrototype && hasPrototype)) {
           // We don't have everything we should, but we do have *something*
           uiComponent.State = VersionState.PartiallyDownloaded;
@@ -91,30 +83,16 @@ namespace TalosDownpatcher {
       }
     }
 
-    private void DetectSteamInstall() {
-      // TODO.
-    }
-
-    // This function is always called on a background thread.
-    public void VersionButtonOnClick(VersionUIComponent component) {
-      Contract.Requires(component != null);
-      Logging.Log($"VersionUIComponent {component.version} clicked in state {component.State}");
-      switch (component.State) {
-        case VersionState.NotDownloaded:
-        case VersionState.PartiallyDownloaded:
-          depotManager.DownloadDepots(component);
-          break;
-        case VersionState.Downloaded:
-          depotManager.SetActiveVersion(component, delegate {
-            // Mark the current active version as inactive. Delayed to account for queueing.
-            int activeVersion = Settings.Default.activeVersion;
-            if (uiComponents.ContainsKey(activeVersion)) uiComponents[activeVersion].State = VersionState.Downloaded;
-          });
-          break;
-        case VersionState.Active:
-          break;
+    public void DetermineActiveVersion() {
+      int version = DepotManager.GetInstalledVersion();
+      if (depotManager.IsFullyCopied(version)) {
+        uiComponents[version].State = VersionState.Active;
+      } else {
+        uiComponents[version].State = VersionState.Copying;
+        depotManager.SaveActiveVersion(version);
       }
     }
+
 
     private void SettingsButton_Click(object sender, object e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
