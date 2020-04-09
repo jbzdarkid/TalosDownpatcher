@@ -177,6 +177,8 @@ namespace TalosDownpatcher {
       // These moves are in the same drive, so they're hopefully fast enough to not worry about the progress bar.
       MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Gehenna), "Content/Talos/DLC_01_Road_To_Gehenna*");
       MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Prototype), "Content/Talos/DLC_Prototype*");
+
+      component.State = VersionState.Active;
     }
 
     #region utilities
@@ -193,11 +195,17 @@ namespace TalosDownpatcher {
     }
 
     public bool IsFullyDownloaded(int version, Package package) {
-      long expectedSize = manifestData.GetDownloadSize(version, package);
       long actualSize = GetFolderSize(GetFolder(version, package));
-      Logging.Log($"Package {package} for version {version} is {actualSize} bytes, expected {expectedSize}");
+      if (actualSize == 0) return false;
 
-      return expectedSize == actualSize;
+      long expectedSize = manifestData.GetDownloadSize(version, package);
+      if (actualSize == expectedSize) return true;
+      Logging.Log($"Package {package} for version {version} is {actualSize} bytes, expected {expectedSize}");
+      if (actualSize > expectedSize) {
+        Logging.Log("Package has additional, unexpected data. Assuming it was fully downloaded...");
+        return true;
+      }
+      return false;
     }
 
     private static int Find(byte[] data, byte[] search, int startIndex = 0) {

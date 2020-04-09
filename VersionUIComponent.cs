@@ -104,8 +104,6 @@ namespace TalosDownpatcher {
       actionButton.Width = 71;
       actionButton.Margin = new Thickness(180, yPos, 0, 0);
       mainWindow.RootGrid.Children.Add(actionButton);
-
-      Logging.Log($"Constructed UI Component {version} at yPos {yPos}");
     }
 
     public void SetProgress(double fractionDownloaded) {
@@ -138,10 +136,12 @@ namespace TalosDownpatcher {
         return state;
       }
       set {
+        // Since this touches a *lot* of UI state, we should just handle it on the main thread.
+        // Actions which need to happen on background threads *should enforce this themselves*
         mainWindow.Dispatcher.Invoke(delegate {
-          // Since this touches a *lot* of UI state, we should just handle it on the main thread.
-          // Actions which need to happen on background threads *should enforce this themselves*
-          Logging.Log($"Changing state for UIComponent {version} from {state} to {value}");
+          if (state != value) { // No need to log if this is just a re-initialization (or otherwise a no-op)
+            Logging.Log($"Changing state for UIComponent {version} from {state} to {value}");
+          }
           state = value;
           switch (state) {
             case VersionState.NotDownloaded:

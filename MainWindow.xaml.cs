@@ -82,9 +82,13 @@ namespace TalosDownpatcher {
 
     public void DetermineActiveVersion() {
       int version = DepotManager.GetInstalledVersion();
-      if (depotManager.IsFullyCopied(version)) {
-        uiComponents[version].State = VersionState.Active;
+      var component = uiComponents[version];
+
+      if (component.State == VersionState.Downloaded && depotManager.IsFullyCopied(version)) {
+        // Only mark active if the data is fully copied.
+        component.State = VersionState.Active;
       } else {
+        // A version was downloaded but we do not have it, save a copy
         uiComponents[version].State = VersionState.Copying;
         DepotManager.SaveActiveVersion(uiComponents[version]);
       }
