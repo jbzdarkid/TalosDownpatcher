@@ -14,6 +14,7 @@ namespace TalosDownpatcher {
 
     public static void OpenConsole() {
       Logging.Log("Opening steam console");
+      bool wasRunning = IsProcessActive("steam");
       Process.Start("steam://open/console");
       WaitForProcessToLaunch("Steam", 10);
       if (Settings.Default.steamHack) {
@@ -22,7 +23,11 @@ namespace TalosDownpatcher {
           new byte[] { 0xFF, 0xD0, 0x84, 0xC0, 0x90, 0xE9, 0x2E, 0xFF, 0xFF, 0xFF }
         );
       }
-      Thread.Sleep(100); // Slight delay for steam to become foreground
+      if (wasRunning) {
+        Thread.Sleep(100); // Slight delay for steam to become foreground
+      } else {
+        Thread.Sleep(10000); // Sleep until steam console actually opens
+      }
     }
 
     public static void DownloadDepot(int appId, int depot, long manifest) {
@@ -53,15 +58,20 @@ namespace TalosDownpatcher {
     private static bool WaitForProcessToLaunch(string processName, int seconds) {
       // Wait for talos to launch (10s max) before returning
       for (var i=0; i<seconds; i++) {
-        foreach (var process in Process.GetProcesses()) {
-          if (process.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase)) {
-            Logging.Log($"{processName} started");
-            return true;
-          }
-        }
+        if (IsProcessActive(processName)) return true;
         Thread.Sleep(1000);
       }
       Logging.Log($"{processName} not started, not waiting any longer");
+      return false;
+    }
+
+    private static bool IsProcessActive(string processName) {
+      foreach (var process in Process.GetProcesses()) {
+        if (process.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase)) {
+          Logging.Log($"{processName} started");
+          return true;
+        }
+      }
       return false;
     }
   }
