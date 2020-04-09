@@ -6,7 +6,6 @@ using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
 // TODO: Progress bar for downloading. This requires estimation of network speeds, which isn't *too* hard. But it's not fun.
-// TODO: Editor
 // TODO: What happens if steam only downloads 99.9% of the depots? How do I 'give up' gracefully? Or, how do I communicate to the user that they should "give up"?
 // TODO: Potentially integrate with SteamWorks to determine install path / DLC status / Game launch status
 // TODO: You can queue "set version active", which is not good. This should cancel the previous copy.
@@ -14,12 +13,12 @@ using TalosDownpatcher.Properties;
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
 // TODO: File chooser for version location?
+// TODO: Extract editor from steam download (aka the download_depots fallback) -- this sucks, editor files are very different
+// TODO: UI thread hanging while waiting for game to launch (??!!)
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
 // - Symlinks (https://github.com/apple1417/LegacyWorkshopLoader/blob/master/SymlinkWindows.cs)
-// - (of course) Automatic detection of steam version w/ copy
-// - Editor support
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
