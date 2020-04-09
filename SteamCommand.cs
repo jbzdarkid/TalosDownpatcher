@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
@@ -53,7 +54,7 @@ namespace TalosDownpatcher {
       // Wait for talos to launch (10s max) before returning
       for (var i=0; i<seconds; i++) {
         foreach (var process in Process.GetProcesses()) {
-          if (process.ProcessName == processName) {
+          if (process.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase)) {
             Logging.Log($"{processName} started");
             return true;
           }
