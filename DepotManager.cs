@@ -173,7 +173,7 @@ namespace TalosDownpatcher {
     private static void SaveActiveVersionInternal(VersionUIComponent component) {
       component.State = VersionState.Copying;
 
-      long totalSize = GetFolderSize(Settings.Default.activeVersionLocation);
+      double totalSize = GetFolderSize(Settings.Default.activeVersionLocation);
       long copied = 0;
       CopyAndOverwrite(Settings.Default.activeVersionLocation, GetFolder(component.version, Package.Main), delegate (long fileSize) {
         copied += fileSize;
@@ -181,9 +181,8 @@ namespace TalosDownpatcher {
       });
 
       // These moves are in the same drive, so they're hopefully fast enough to not worry about the progress bar.
-      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Gehenna), "Content/Talos/DLC_01_Road_To_Gehenna*");
-      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Prototype), "Content/Talos/DLC_Prototype*");
-      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Editor), "Content/Talos/???"); // TODO -- where are the editor files saved?
+      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Gehenna), "DLC_01_Road_To_Gehenna*");
+      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Prototype), "DLC_Prototype*");
 
       component.State = VersionState.Active;
     }
