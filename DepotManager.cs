@@ -61,6 +61,7 @@ namespace TalosDownpatcher {
         List<Package> requiredPackages = new List<Package> { Package.Main };
         if (Settings.Default.ownsGehenna) requiredPackages.Add(Package.Gehenna);
         if (Settings.Default.ownsPrototype) requiredPackages.Add(Package.Prototype);
+        if (Settings.Default.wantsEditor) requiredPackages.Add(Package.Editor);
 
         double totalSize = 0;
         foreach (var package in requiredPackages) totalSize += GetFolderSize(GetFolder(component.version, package));
@@ -109,6 +110,9 @@ namespace TalosDownpatcher {
         }
         if (Settings.Default.ownsPrototype && !IsFullyDownloaded(version, Package.Prototype)) {
           neededManifests.AddRange(manifestData[version, Package.Prototype]);
+        }
+        if (Settings.Default.wantsEditor && !IsFullyDownloaded(version, Package.Editor)) {
+          neededManifests.AddRange(manifestData[version, Package.Editor]);
         }
 
         double totalDownloadSize = 0;
@@ -177,6 +181,7 @@ namespace TalosDownpatcher {
       // These moves are in the same drive, so they're hopefully fast enough to not worry about the progress bar.
       MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Gehenna), "Content/Talos/DLC_01_Road_To_Gehenna*");
       MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Prototype), "Content/Talos/DLC_Prototype*");
+      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Editor), "Content/Talos/???"); // TODO -- where are the editor files saved?
 
       component.State = VersionState.Active;
     }
@@ -190,6 +195,7 @@ namespace TalosDownpatcher {
       expectedSize += manifestData.GetDownloadSize(version, Package.Main);
       if (Settings.Default.ownsGehenna) expectedSize += manifestData.GetDownloadSize(version, Package.Gehenna);
       if (Settings.Default.ownsPrototype) expectedSize += manifestData.GetDownloadSize(version, Package.Prototype);
+      if (Settings.Default.wantsEditor) expectedSize += manifestData.GetDownloadSize(version, Package.Editor);
       Logging.Log("Actual: " + actualSize + " Expected: " + expectedSize + " IsFullyCopied: " + (actualSize >= expectedSize));
       return actualSize >= expectedSize;
     }
@@ -251,6 +257,7 @@ namespace TalosDownpatcher {
       if (package == Package.Main) return folder;
       else if (package == Package.Gehenna) return folder + "_Gehenna";
       else if (package == Package.Prototype) return folder + "_Prototype";
+      else if (package == Package.Editor) return folder + "_Editor";
       else {
         Debug.Assert(false);
         return "";

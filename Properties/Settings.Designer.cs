@@ -130,5 +130,17 @@ namespace TalosDownpatcher.Properties {
                 this["steamHack"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool wantsEditor {
+            get {
+                return ((bool)(this["wantsEditor"]));
+            }
+            set {
+                this["wantsEditor"] = value;
+            }
+        }
     }
 }

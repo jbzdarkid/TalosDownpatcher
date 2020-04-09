@@ -3,5 +3,6 @@ namespace TalosDownpatcher {
     Main,
     Gehenna,
     Prototype,
+    Editor,
   }
 }

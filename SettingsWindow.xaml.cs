@@ -16,6 +16,7 @@ namespace TalosDownpatcher {
       AllVersionsCheckbox.IsChecked = settings.showAllVersions;
       GehennaCheckbox.IsChecked = settings.ownsGehenna;
       PrototypeCheckbox.IsChecked = settings.ownsPrototype;
+      EditorCheckbox.IsChecked = settings.wantsEditor;
       LaunchModdable.IsChecked = settings.launchModdable;
       UseSymlinks.IsChecked = settings.useSymlinks;
       SteamHack.IsChecked = settings.steamHack;
@@ -24,10 +25,14 @@ namespace TalosDownpatcher {
       AllVersionsLabel.PreviewMouseDown += delegate { AllVersionsCheckbox.IsChecked = !AllVersionsCheckbox.IsChecked; };
       GehennaLabel.PreviewMouseDown += delegate { GehennaCheckbox.IsChecked = !GehennaCheckbox.IsChecked; };
       PrototypeLabel.PreviewMouseDown += delegate { PrototypeCheckbox.IsChecked = !PrototypeCheckbox.IsChecked; };
+      EditorLabel.PreviewMouseDown += delegate { EditorCheckbox.IsChecked = !EditorCheckbox.IsChecked; };
       ModdableLabel.PreviewMouseDown += delegate { LaunchModdable.IsChecked = !LaunchModdable.IsChecked; };
       SymlinkLabel.PreviewMouseDown += delegate { UseSymlinks.IsChecked = !UseSymlinks.IsChecked; };
       HackLabel.PreviewMouseDown += delegate { SteamHack.IsChecked = !SteamHack.IsChecked; };
 
+      if (!showHiddenSettings) Height -= 25;
+      EditorCheckbox.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
+      EditorLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
       UseSymlinks.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
       SymlinkLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
       SteamHack.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
@@ -59,6 +64,7 @@ namespace TalosDownpatcher {
       settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;
       settings.ownsGehenna = (bool)GehennaCheckbox.IsChecked;
       settings.ownsPrototype = (bool)PrototypeCheckbox.IsChecked;
+      settings.wantsEditor = (bool)EditorCheckbox.IsChecked;
       settings.launchModdable = (bool)LaunchModdable.IsChecked;
       settings.useSymlinks = (bool)UseSymlinks.IsChecked;
       settings.steamHack = (bool)SteamHack.IsChecked;
@@ -75,6 +81,7 @@ namespace TalosDownpatcher {
       AllVersionsCheckbox.IsChecked = false;
       GehennaCheckbox.IsChecked = false;
       PrototypeCheckbox.IsChecked = false;
+      EditorCheckbox.IsChecked = false;
       LaunchModdable.IsChecked = false;
       UseSymlinks.IsChecked = false;
       SteamHack.IsChecked = false;

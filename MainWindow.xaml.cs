@@ -58,11 +58,18 @@ namespace TalosDownpatcher {
         bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
         bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
         bool hasPrototype = depotManager.IsFullyDownloaded(version, Package.Prototype);
+        bool hasEditor = depotManager.IsFullyDownloaded(version, Package.Editor);
 
-        if (hasMain && (!Settings.Default.ownsGehenna || hasGehenna) && (!Settings.Default.ownsPrototype || hasPrototype)) {
+        if (hasMain &&
+          (!Settings.Default.ownsGehenna || hasGehenna) &&
+          (!Settings.Default.ownsPrototype || hasPrototype) &&
+          (!Settings.Default.wantsEditor || hasEditor)) {
           // We have everything we should
           uiComponent.State = VersionState.Downloaded;
-        } else if (hasMain || (Settings.Default.ownsGehenna && hasGehenna) || (Settings.Default.ownsPrototype && hasPrototype)) {
+        } else if (hasMain ||
+          (Settings.Default.ownsGehenna && hasGehenna) ||
+          (Settings.Default.ownsPrototype && hasPrototype) ||
+          (Settings.Default.wantsEditor && hasEditor)) {
           // We don't have everything we should, but we do have *something*
           uiComponent.State = VersionState.PartiallyDownloaded;
         } else {

@@ -43,7 +43,8 @@ namespace TalosDownpatcher {
     // @Cleanup
     public static readonly int GEHENNA = 358470;
     public static readonly int PROTOTYPE = 322022;
-    public static readonly List<int> depots = new List<int> { 257516, 257519, 257511, 257515 };
+    public static readonly List<int> MAIN_DEPOTS = new List<int> { 257516, 257519, 257511, 257515 };
+    public static readonly List<int> EDITOR_DEPOTS = new List<int> { 257561, 257565 };
 
     private Dictionary<int, Dictionary<Package, List<SteamManifest>>> data;
 
@@ -72,6 +73,7 @@ namespace TalosDownpatcher {
         data[version][Package.Main] = new List<SteamManifest>();
         data[version][Package.Gehenna] = new List<SteamManifest>();
         data[version][Package.Prototype] = new List<SteamManifest>();
+        data[version][Package.Editor] = new List<SteamManifest>();
       }
 
       AddManifest(440323, Package.Main, 257510, 257511, 0799213806328220919, 2, 66117856);
@@ -279,16 +281,58 @@ namespace TalosDownpatcher {
       AddManifest(246379, Package.Prototype, 257510, 322022, 4423801769448698176, 2, 191045699);
       AddManifest(244371, Package.Prototype, 257510, 322022, 0570457731767330233, 2, 191173592);
       AddManifest(243520, Package.Prototype, 257510, 322022, 1221230661228297401, 4, 291798721);
-      AddManifest(226087, Package.Prototype, 257510, 322022, 7180495594989737482, 4, 275966134);
-      AddManifest(224995, Package.Prototype, 257510, 322022, 6536174967355028889, 3, 243487857);
-      AddManifest(224531, Package.Prototype, 257510, 322022, 7516537008051594086, 3, 243488546);
-      AddManifest(223249, Package.Prototype, 257510, 322022, 3867407920981508845, 3, 225475676);
-      AddManifest(222477, Package.Prototype, 257510, 322022, 8917339509592123029, 3, 225475410);
-      AddManifest(221394, Package.Prototype, 257510, 322022, 6888774931510513164, 3, 218106434);
-      AddManifest(220996, Package.Prototype, 257510, 322022, 7673940384630485679, 3, 211726262);
-      AddManifest(220675, Package.Prototype, 257510, 322022, 4383443687812477256, 3, 206909511);
-      AddManifest(220625, Package.Prototype, 257510, 322022, 8183524469048336858, 3, 206907989);
-      AddManifest(220480, Package.Prototype, 257510, 322022, 2824340380872620137, 3, 172228256);
+
+      AddManifest(440323, Package.Editor, 257560, 257561, 6074611688291943692, 0, 0);
+      AddManifest(429074, Package.Editor, 257560, 257561, 0012535541839910782, 0, 0);
+      AddManifest(426014, Package.Editor, 257560, 257561, 9032863148474862611, 0, 0);
+      AddManifest(424910, Package.Editor, 257560, 257561, 6380867156067713873, 0, 0);
+      AddManifest(326589, Package.Editor, 257560, 257561, 7403469436702737328, 0, 0);
+      AddManifest(301136, Package.Editor, 257560, 257561, 1853831671363106406, 0, 0);
+      AddManifest(300763, Package.Editor, 257560, 257561, 4419631978316278784, 0, 0);
+      AddManifest(293384, Package.Editor, 257560, 257561, 3937516059174114109, 0, 0);
+      AddManifest(291145, Package.Editor, 257560, 257561, 2774799663803499998, 0, 0);
+      AddManifest(284152, Package.Editor, 257560, 257561, 1024129366064843273, 0, 0);
+      AddManifest(277544, Package.Editor, 257560, 257561, 0232702167893949832, 0, 0);
+      AddManifest(269335, Package.Editor, 257560, 257561, 4443819059974101813, 0, 0);
+      AddManifest(267252, Package.Editor, 257560, 257561, 7478870879515759087, 0, 0);
+      AddManifest(264510, Package.Editor, 257560, 257561, 6410945621576250013, 0, 0);
+      AddManifest(260924, Package.Editor, 257560, 257561, 7235432741885730082, 0, 0);
+      AddManifest(258375, Package.Editor, 257560, 257561, 6903110476929197927, 0, 0);
+      AddManifest(252786, Package.Editor, 257560, 257561, 1690661485191386338, 0, 0);
+      AddManifest(250756, Package.Editor, 257560, 257561, 5512540270319659673, 0, 0);
+      AddManifest(249913, Package.Editor, 257560, 257561, 4867462938257249448, 0, 0);
+      AddManifest(249740, Package.Editor, 257560, 257561, 0584477399320707358, 0, 0);
+      AddManifest(248828, Package.Editor, 257560, 257561, 1427254775991481127, 0, 0);
+      AddManifest(248139, Package.Editor, 257560, 257561, 2269154412409765367, 0, 0);
+      AddManifest(246379, Package.Editor, 257560, 257561, 3201806512441871491, 0, 0);
+      AddManifest(244371, Package.Editor, 257560, 257561, 5615026782384047935, 0, 0);
+      AddManifest(243520, Package.Editor, 257560, 257561, 7629198744079585242, 0, 0);
+
+      AddManifest(440323, Package.Editor, 257560, 257565, 3349372665361510613, 0, 0);
+      AddManifest(429074, Package.Editor, 257560, 257565, 0561188624384138587, 0, 0);
+      AddManifest(426014, Package.Editor, 257560, 257565, 2823013440787395799, 0, 0);
+      AddManifest(424910, Package.Editor, 257560, 257565, 4575988063340670419, 0, 0);
+      AddManifest(326589, Package.Editor, 257560, 257565, 0618742413915366044, 0, 0);
+      AddManifest(301136, Package.Editor, 257560, 257565, 1208275055108540846, 0, 0);
+      AddManifest(300763, Package.Editor, 257560, 257565, 6912166628361125702, 0, 0);
+      AddManifest(293384, Package.Editor, 257560, 257565, 1715089954619827023, 0, 0);
+      AddManifest(291145, Package.Editor, 257560, 257565, 8615466065357805889, 0, 0);
+      AddManifest(284152, Package.Editor, 257560, 257565, 5053070112053004195, 0, 0);
+      AddManifest(277544, Package.Editor, 257560, 257565, 1482229888993923370, 0, 0);
+      AddManifest(269335, Package.Editor, 257560, 257565, 7806361588893739511, 0, 0);
+      AddManifest(267252, Package.Editor, 257560, 257565, 2998209476115358794, 0, 0);
+      AddManifest(264510, Package.Editor, 257560, 257565, 7725027497915974984, 0, 0);
+      AddManifest(260924, Package.Editor, 257560, 257565, 5184604821950164019, 0, 0);
+      AddManifest(258375, Package.Editor, 257560, 257565, 1720860299775178313, 0, 0);
+      AddManifest(252786, Package.Editor, 257560, 257565, 4362986188065581554, 0, 0);
+      AddManifest(250756, Package.Editor, 257560, 257565, 7444645619316095681, 0, 0);
+      AddManifest(249913, Package.Editor, 257560, 257565, 8408498828499049481, 0, 0);
+      AddManifest(249740, Package.Editor, 257560, 257565, 6370494515660992509, 0, 0);
+      AddManifest(248828, Package.Editor, 257560, 257565, 8023134853166241418, 0, 0);
+      AddManifest(248139, Package.Editor, 257560, 257565, 5416623746614877934, 0, 0);
+      AddManifest(246379, Package.Editor, 257560, 257565, 2088321232340796377, 0, 0);
+      AddManifest(244371, Package.Editor, 257560, 257565, 2037227228655442843, 0, 0);
+      AddManifest(243520, Package.Editor, 257560, 257565, 9162957285291849883, 0, 0);
     }
   }
 }
