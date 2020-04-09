@@ -24,7 +24,7 @@ namespace TalosDownpatcher {
       thread.IsBackground = true;
       thread.Start();
     }
-    
+
     private void SetActiveVersionInternal(VersionUIComponent component, Action onSetActiveVersion) {
       Contract.Requires(component != null && onSetActiveVersion != null);
       string activeVersionLocation = Settings.Default.activeVersionLocation;
@@ -56,9 +56,9 @@ namespace TalosDownpatcher {
         Logging.Log("Deletion successful");
 
         // Copy the x86 binaries to the x64 folder. They may be overwritten by the next copy operation if there are real x64 binaries.
-        CopyAndOverwrite(GetFolder(component.version, Package.Main) + "/Bin", activeVersionLocation + "/Bin/x64", null);
+        CopyAndOverwrite(GetFolder(component.version, Package.Main) + "/Bin", activeVersionLocation + "/Bin/x64");
 
-        List<Package> requiredPackages = new List<Package>{Package.Main};
+        List<Package> requiredPackages = new List<Package> { Package.Main };
         if (Settings.Default.ownsGehenna) requiredPackages.Add(Package.Gehenna);
         if (Settings.Default.ownsPrototype) requiredPackages.Add(Package.Prototype);
 
@@ -160,23 +160,26 @@ namespace TalosDownpatcher {
       }
     }
 
-    public void SaveActiveVersion(int version) {
-      var thread = new Thread(() => { SaveActiveVersionInternal(version); });
+    public static void SaveActiveVersion(VersionUIComponent component) {
+      var thread = new Thread(() => { SaveActiveVersionInternal(component); });
       thread.IsBackground = true;
       thread.Start();
     }
 
-    private void SaveActiveVersionInternal(int version) {
-      // Copy all files to Old Versions/<version>
-      // *move* all files matching Content/Talos/DLC_01_Road_To_Gehenna* into _Gehenna
-      // *move* all files matching Content/Talos/DLC_Prototype* into _Prototype
+    private static void SaveActiveVersionInternal(VersionUIComponent component) {
+      long totalSize = GetFolderSize(Settings.Default.activeVersionLocation);
+      long copied = 0;
+      CopyAndOverwrite(Settings.Default.activeVersionLocation, GetFolder(component.version, Package.Main), delegate (long fileSize) {
+        copied += fileSize;
+        component.SetProgress(copied / totalSize);
+      });
 
-      // ManifestData.
-      // FCopy()
-
+      // These moves are in the same drive, so they're hopefully fast enough to not worry about the progress bar.
+      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Gehenna), "Content/Talos/DLC_01_Road_To_Gehenna*");
+      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Prototype), "Content/Talos/DLC_Prototype*");
     }
 
-    // *** Utilities ***
+    #region utilities
 
     public bool IsFullyCopied(int version) {
       long actualSize = GetFolderSize($"{Settings.Default.activeVersionLocation}");
@@ -222,7 +225,7 @@ namespace TalosDownpatcher {
       byte[] buff = new byte[buffSize];
       using (FileStream fsread = talos.OpenRead()) {
         using (BinaryReader bwread = new BinaryReader(fsread)) {
-          for (;;) {
+          for (; ; ) {
             int readBytes = bwread.Read(buff, 0, buffSize);
             if (readBytes == 0) break;
             int index = Find(buff, Encoding.ASCII.GetBytes("Talos-Windows-Final"));
@@ -256,7 +259,17 @@ namespace TalosDownpatcher {
       return size;
     }
 
-    private static void CopyAndOverwrite(string srcFolder, string dstFolder, Action<long> onCopyBytes) {
+    private static void MoveMatching(string srcFolder, string dstFolder, string searchPattern) {
+      var src = new DirectoryInfo(srcFolder);
+      if (!src.Exists) return;
+      var dst = new DirectoryInfo(dstFolder);
+      if (!dst.Exists) Directory.CreateDirectory(dstFolder);
+
+      foreach (var dir in src.GetDirectories()) MoveMatching($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", searchPattern);
+      foreach (var file in src.GetFiles(searchPattern)) file.MoveTo(dstFolder);
+    }
+
+    private static void CopyAndOverwrite(string srcFolder, string dstFolder, Action<long> onCopyBytes = null) {
       var src = new DirectoryInfo(srcFolder);
       if (!src.Exists) return;
       var dst = new DirectoryInfo(dstFolder);
@@ -289,7 +302,7 @@ namespace TalosDownpatcher {
         using (BinaryReader bwread = new BinaryReader(fsread)) {
           using (FileStream fswrite = new FileStream(destination, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, buffSize)) {
             using (BinaryWriter bwwrite = new BinaryWriter(fswrite)) {
-              for (;;) {
+              for (; ; ) {
                 int readBytes = bwread.Read(buff, 0, buffSize);
                 if (readBytes == 0) break;
                 bwwrite.Write(buff, 0, readBytes);
@@ -300,5 +313,7 @@ namespace TalosDownpatcher {
         }
       }
     }
+
+    #endregion
   }
 }

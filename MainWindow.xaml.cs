@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.Contracts;
-using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using TalosDownpatcher.Properties;
@@ -22,7 +19,7 @@ using TalosDownpatcher.Properties;
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
 // - Symlinks (https://github.com/apple1417/LegacyWorkshopLoader/blob/master/SymlinkWindows.cs)
 // - (of course) Automatic detection of steam version w/ copy
-// - (Editor, if possible. If I add a steam.exe hack, then think about this.)
+// - Editor support
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
@@ -89,11 +86,11 @@ namespace TalosDownpatcher {
         uiComponents[version].State = VersionState.Active;
       } else {
         uiComponents[version].State = VersionState.Copying;
-        depotManager.SaveActiveVersion(version);
+        DepotManager.SaveActiveVersion(uiComponents[version]);
       }
     }
 
-
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "CA1801", Justification = "This is inheriting an interface")]
     private void SettingsButton_Click(object sender, object e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
         Logging.Log("Showing settings window");
