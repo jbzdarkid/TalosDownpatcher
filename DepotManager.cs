@@ -171,6 +171,8 @@ namespace TalosDownpatcher {
     }
 
     private static void SaveActiveVersionInternal(VersionUIComponent component) {
+      component.State = VersionState.Copying;
+
       long totalSize = GetFolderSize(Settings.Default.activeVersionLocation);
       long copied = 0;
       CopyAndOverwrite(Settings.Default.activeVersionLocation, GetFolder(component.version, Package.Main), delegate (long fileSize) {

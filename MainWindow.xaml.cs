@@ -96,7 +96,6 @@ namespace TalosDownpatcher {
         component.State = VersionState.Active;
       } else {
         // A version was downloaded but we do not have it, save a copy
-        uiComponents[version].State = VersionState.Copying;
         DepotManager.SaveActiveVersion(uiComponents[version]);
       }
     }
