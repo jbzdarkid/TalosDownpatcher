@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Windows;
 using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
@@ -56,9 +57,9 @@ namespace TalosDownpatcher {
       if (++buffSize >= 5) Flush();
     }
 
-    public static void MessageBox(string message, string title) {
+    public static MessageBoxResult MessageBox(string message, string title, MessageBoxButton options = MessageBoxButton.OK) {
       Log(message);
-      System.Windows.MessageBox.Show(message, title);
+      return System.Windows.MessageBox.Show(message, title, options);
     }
   }
 }
