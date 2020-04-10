@@ -121,8 +121,8 @@ namespace TalosDownpatcher {
         long freeSpace = drive.TotalFreeSpace;
         if (drive.TotalFreeSpace < totalDownloadSize) {
           Logging.MessageBox($@"Steam install location is in drive {drive.Name}
-  has {Math.Round(freeSpace / 1000000000.0, 1)} GB of free space
-  but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not enough space");
+has {Math.Round(freeSpace / 1000000000.0, 1)} GB of free space
+but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not enough space");
           return;
         }
 
