@@ -31,28 +31,13 @@ namespace TalosDownpatcher {
           continue; // Ignore read errors by proceeding
         }
 
-        int index = Find(data, search);
+        int index = Utils.Find(data, search);
         if (index == -1) continue;
 
         // Always assume write succeeds
         NativeMethods.WriteProcessMemory(process.Handle, i + index, replace, replace.Length, out _);
         break;
       }
-    }
-
-    private static int Find(byte[] data, byte[] search, int startIndex = 0) {
-      for (int i = startIndex; i < data.Length - search.Length; i++) {
-        bool match = true;
-        for (int j = 0; j < search.Length; j++) {
-          if (data[i + j] == search[j]) {
-            continue;
-          }
-          match = false;
-          break;
-        }
-        if (match) return i;
-      }
-      return -1;
     }
   }
 }

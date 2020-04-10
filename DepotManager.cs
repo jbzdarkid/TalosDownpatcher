@@ -64,7 +64,7 @@ namespace TalosDownpatcher {
         if (Settings.Default.wantsEditor) requiredPackages.Add(Package.Editor);
 
         double totalSize = 0;
-        foreach (var package in requiredPackages) totalSize += GetFolderSize(GetFolder(component.version, package));
+        foreach (var package in requiredPackages) totalSize += Utils.GetFolderSize(GetFolder(component.version, package));
 
         // @Performance Multithreading *may* save time here. I doubt it.
         long copied = 0;
@@ -139,7 +139,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
 
         while (true) {
           long actualSize = 0;
-          foreach (var manifest in neededManifests) actualSize += GetFolderSize(manifest.location);
+          foreach (var manifest in neededManifests) actualSize += Utils.GetFolderSize(manifest.location);
           component.SetProgress(0.8 * actualSize / totalDownloadSize); // 80% - Downloading
           if (actualSize == totalDownloadSize) break;
           Thread.Sleep(1000);
@@ -173,18 +173,14 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
     private static void SaveActiveVersionInternal(VersionUIComponent component) {
       component.State = VersionState.Copying;
 
-      double totalSize = GetFolderSize(Settings.Default.activeVersionLocation);
+      double totalSize = Utils.GetFolderSize(Settings.Default.activeVersionLocation);
       long copied = 0;
-
-      // foreach (var a in Directory.EnumerateFiles(Settings.Default.activeVersionLocation, "*", )) {
-      //   int k = 1;
-      // }
 
       var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
       foreach (var file in src.EnumerateFiles("*", SearchOption.AllDirectories)) {
-        Package package = DeterminePackage(file);
-        var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, package));
-        FCopy(file.FullName, dest, delegate (long fileSize) {
+        // This .Replace is a little bit gross, I'd rather have a 'relative path to activeVersionLocation'. But it works.
+        var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, DeterminePackage(file)));
+        Utils.FCopy(file.FullName, dest, delegate (long fileSize) {
           copied += fileSize;
           component.SetProgress(copied / totalSize);
         });
@@ -193,10 +189,8 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       component.State = VersionState.Active;
     }
 
-    #region utilities
-
     public bool IsFullyCopied(int version) {
-      long actualSize = GetFolderSize($"{Settings.Default.activeVersionLocation}");
+      long actualSize = Utils.GetFolderSize($"{Settings.Default.activeVersionLocation}");
 
       long expectedSize = 0;
       expectedSize += manifestData.GetDownloadSize(version, Package.Main);
@@ -208,7 +202,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
     }
 
     public bool IsFullyDownloaded(int version, Package package) {
-      long actualSize = GetFolderSize(GetFolder(version, package));
+      long actualSize = Utils.GetFolderSize(GetFolder(version, package));
       if (actualSize == 0) return false;
 
       long expectedSize = manifestData.GetDownloadSize(version, package);
@@ -219,21 +213,6 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         return true;
       }
       return false;
-    }
-
-    private static int Find(byte[] data, byte[] search, int startIndex = 0) {
-      for (int i = startIndex; i < data.Length - search.Length; i++) {
-        bool match = true;
-        for (int j = 0; j < search.Length; j++) {
-          if (data[i + j] == search[j]) {
-            continue;
-          }
-          match = false;
-          break;
-        }
-        if (match) return i;
-      }
-      return -1;
     }
 
     public static int GetInstalledVersion() {
@@ -249,7 +228,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
           for (; ; ) {
             int readBytes = bwread.Read(buff, 0, buffSize);
             if (readBytes == 0) break;
-            int index = Find(buff, Encoding.ASCII.GetBytes("Talos-Windows-Final"));
+            int index = Utils.Find(buff, Encoding.ASCII.GetBytes("Talos-Windows-Final"));
             if (index != -1) {
               return int.Parse(Encoding.ASCII.GetString(buff, index + 21, 6), CultureInfo.InvariantCulture);
             }
@@ -283,25 +262,15 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       }
     }
 
-    private static long GetFolderSize(string folder) {
-      long size = 0;
-      var src = new DirectoryInfo(folder);
-      if (src.Exists) {
-        var files = src.GetFiles("*", SearchOption.AllDirectories);
-        foreach (var file in files) size += file.Length;
-      }
-      return size;
-    }
-
-    private static void MoveMatching(string srcFolder, string dstFolder, string searchPattern) {
-      var src = new DirectoryInfo(srcFolder);
-      if (!src.Exists) return;
-      var dst = new DirectoryInfo(dstFolder);
-      if (!dst.Exists) Directory.CreateDirectory(dstFolder);
-
-      foreach (var dir in src.GetDirectories()) MoveMatching($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", searchPattern);
-      foreach (var file in src.GetFiles(searchPattern)) file.MoveTo(dstFolder);
-    }
+    // private static void MoveMatching(string srcFolder, string dstFolder, string searchPattern) {
+    //   var src = new DirectoryInfo(srcFolder);
+    //   if (!src.Exists) return;
+    //   var dst = new DirectoryInfo(dstFolder);
+    //   if (!dst.Exists) Directory.CreateDirectory(dstFolder);
+    // 
+    //   foreach (var dir in src.GetDirectories()) MoveMatching($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", searchPattern);
+    //   foreach (var file in src.GetFiles(searchPattern)) file.MoveTo(dstFolder);
+    // }
 
     private static void CopyAndOverwrite(string srcFolder, string dstFolder, Action<long> onCopyBytes = null) {
       var src = new DirectoryInfo(srcFolder);
@@ -310,46 +279,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       if (!dst.Exists) Directory.CreateDirectory(dstFolder);
 
       foreach (var dir in src.GetDirectories()) CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", onCopyBytes);
-      foreach (var file in src.GetFiles()) FCopy(file.FullName, $"{dst}/{file.Name}", onCopyBytes);
+      foreach (var file in src.GetFiles()) Utils.FCopy(file.FullName, $"{dst}/{file.Name}", onCopyBytes);
     }
-
-    /// <summary>
-    /// Fast file move with big buffers
-    /// Author: Frank T. Clark
-    /// Downloaded from: https://www.codeproject.com/Tips/777322/A-Faster-File-Copy
-    /// License: CPOL
-    /// Modifications:
-    ///   - Formatted code
-    ///   - Removed trailing "Delete"
-    ///   - Renamed variables
-    ///   - Changed from move to copy (overwrite implied)
-    ///   - Add callback for progress indicator
-    ///   - Added automatic folder creation for copying to non-existant paths
-    /// </summary>
-    /// <param name="source">Source file path</param> 
-    /// <param name="destination">Destination file path</param> 
-    /// <param name="onCopyBytes">Callback to fire after copying bytes (used for progress bars)</param>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1005:Delegate invocation can be simplified.", Justification = "The if check is relevant, as onCopyBytes may be null.")]
-    static void FCopy(string source, string destination, Action<long> onCopyBytes) {
-      int buffSize = (1 << 20); // 1 MB
-      byte[] buff = new byte[buffSize];
-      using (FileStream fsread = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.None, buffSize)) {
-        using (BinaryReader bwread = new BinaryReader(fsread)) {
-          new FileInfo(destination).Directory.Create(); // Ensure target folder exists
-          using (FileStream fswrite = new FileStream(destination, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, buffSize)) {
-            using (BinaryWriter bwwrite = new BinaryWriter(fswrite)) {
-              for (; ; ) {
-                int readBytes = bwread.Read(buff, 0, buffSize);
-                if (readBytes == 0) break;
-                bwwrite.Write(buff, 0, readBytes);
-                if (onCopyBytes != null) onCopyBytes(readBytes);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    #endregion
   }
 }
