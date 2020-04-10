@@ -114,6 +114,11 @@ namespace TalosDownpatcher {
         if (Settings.Default.wantsEditor && !IsFullyDownloaded(version, Package.Editor)) {
           neededManifests.AddRange(manifestData[version, Package.Editor]);
         }
+        if (neededManifests.Count == 0) {
+          Logging.Log($"Attempted to download manifests for {version}, but no manfiests applied.");
+          component.State = VersionState.Downloaded;
+          return;
+        }
 
         double totalDownloadSize = 0;
         foreach (var manifest in neededManifests) totalDownloadSize += manifest.size;
