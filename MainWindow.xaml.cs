@@ -25,11 +25,11 @@ namespace TalosDownpatcher {
     internal DepotManager depotManager = new DepotManager();
     internal Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
+    private static Dispatcher dispatcher;
 
     public MainWindow() {
       InitializeComponent();
       LoadVersions();
-      DetermineActiveVersion();
       dispatcher = Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
@@ -49,6 +49,8 @@ namespace TalosDownpatcher {
         uiComponent.Dispose();
       }
       uiComponents.Clear();
+
+      int installedVersion = DepotManager.GetInstalledVersion();
 
       this.Height = 50;
       foreach (int version in ManifestData.allVersions) {
@@ -76,25 +78,25 @@ namespace TalosDownpatcher {
           uiComponent.State = VersionState.NotDownloaded;
         }
 
-        if (uiComponent.State != VersionState.NotDownloaded || ManifestData.commonVersions.Contains(version) || Settings.Default.showAllVersions) {
+        if (version == installedVersion) {
+          if (uiComponent.State == VersionState.Downloaded && depotManager.IsFullyCopied(installedVersion)) {
+            // Only mark active if the data is fully copied.
+            uiComponent.State = VersionState.Active;
+          } else {
+            uiComponent.State = VersionState.ActiveSteam;
+          }
+        }
+
+        if (uiComponent.State != VersionState.NotDownloaded ||
+          ManifestData.commonVersions.Contains(version) ||
+          Settings.Default.showAllVersions ||
+          version == installedVersion) {
           // Only add the version if it's downloaded, common, or we're showing all versions
           uiComponents[version] = uiComponent;
           this.Height += 20;
         } else {
           uiComponent.Dispose();
         }
-      }
-    }
-
-    public void DetermineActiveVersion() {
-      int version = DepotManager.GetInstalledVersion();
-      var component = uiComponents[version];
-
-      if (component.State == VersionState.Downloaded && depotManager.IsFullyCopied(version)) {
-        // Only mark active if the data is fully copied.
-        component.State = VersionState.Active;
-      } else {
-        component.State = VersionState.ActiveSteam;
       }
     }
 
@@ -118,7 +120,6 @@ namespace TalosDownpatcher {
       base.OnClosing(e);
     }
 
-    private static Dispatcher dispatcher;
     public static void SetForeground() {
       dispatcher.Invoke(delegate {
         Logging.Log("Setting as foreground window");
