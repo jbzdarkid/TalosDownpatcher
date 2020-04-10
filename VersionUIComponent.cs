@@ -185,8 +185,8 @@ namespace TalosDownpatcher {
                 }
               });
               break;
-            case VersionState.ActiveSteam: // TODO: Blah.
-              stateBox.Text = "Something Steam";
+            case VersionState.ActiveSteam:
+              stateBox.Text = "Active in Steam";
               actionButton.Content = "Copy";
               SetOnClick(actionButton, delegate {
                 DepotManager.SaveActiveVersion(this);
