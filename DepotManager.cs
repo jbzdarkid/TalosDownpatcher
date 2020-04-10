@@ -175,14 +175,20 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
 
       double totalSize = GetFolderSize(Settings.Default.activeVersionLocation);
       long copied = 0;
-      CopyAndOverwrite(Settings.Default.activeVersionLocation, GetFolder(component.version, Package.Main), delegate (long fileSize) {
-        copied += fileSize;
-        component.SetProgress(copied / totalSize);
-      });
 
-      // These moves are in the same drive, so they're hopefully fast enough to not worry about the progress bar.
-      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Gehenna), "DLC_01_Road_To_Gehenna*");
-      MoveMatching(GetFolder(component.version, Package.Main), GetFolder(component.version, Package.Prototype), "DLC_Prototype*");
+      // foreach (var a in Directory.EnumerateFiles(Settings.Default.activeVersionLocation, "*", )) {
+      //   int k = 1;
+      // }
+
+      var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
+      foreach (var file in src.EnumerateFiles("*", SearchOption.AllDirectories)) {
+        Package package = DeterminePackage(file);
+        var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, package));
+        FCopy(file.FullName, dest, delegate (long fileSize) {
+          copied += fileSize;
+          component.SetProgress(copied / totalSize);
+        });
+      }
 
       component.State = VersionState.Active;
     }
@@ -253,6 +259,18 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       return 0;
     }
 
+    private static Package DeterminePackage(FileInfo file) {
+      if (file.Name.StartsWith("DLC_01_Road_To_Gehenna", StringComparison.OrdinalIgnoreCase)) {
+        return Package.Gehenna;
+      } else if (file.Name.StartsWith("DLC_Prototype", StringComparison.OrdinalIgnoreCase)) {
+        return Package.Prototype;
+      } else if (/* something to do with editor*/ false) {
+        return Package.Editor;
+      } else {
+        return Package.Main;
+      }
+    }
+
     private static string GetFolder(int version, Package package) {
       string folder = $"{Settings.Default.oldVersionLocation}/{version}";
       if (package == Package.Main) return folder;
@@ -306,6 +324,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
     ///   - Renamed variables
     ///   - Changed from move to copy (overwrite implied)
     ///   - Add callback for progress indicator
+    ///   - Added automatic folder creation for copying to non-existant paths
     /// </summary>
     /// <param name="source">Source file path</param> 
     /// <param name="destination">Destination file path</param> 
@@ -316,6 +335,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       byte[] buff = new byte[buffSize];
       using (FileStream fsread = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.None, buffSize)) {
         using (BinaryReader bwread = new BinaryReader(fsread)) {
+          new FileInfo(destination).Directory.Create(); // Ensure target folder exists
           using (FileStream fswrite = new FileStream(destination, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, buffSize)) {
             using (BinaryWriter bwwrite = new BinaryWriter(fswrite)) {
               for (; ; ) {
