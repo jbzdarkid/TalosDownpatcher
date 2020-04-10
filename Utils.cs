@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -76,7 +77,7 @@ namespace TalosDownpatcher {
     /// <param name="source">Source file path</param> 
     /// <param name="destination">Destination file path</param> 
     /// <param name="onCopyBytes">Callback to fire after copying bytes (used for progress bars)</param>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1005:Delegate invocation can be simplified.", Justification = "The if check is relevant, as onCopyBytes may be null.")]
+    [SuppressMessage("Style", "IDE1005", Justification = "The if check is relevant, as onCopyBytes may be null.")]
     internal static void FCopy(string source, string destination, Action<long> onCopyBytes) {
       int buffSize = (1 << 20); // 1 MB
       byte[] buff = new byte[buffSize];

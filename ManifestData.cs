@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TalosDownpatcher {
   using ManifestDict = Dictionary<int, Dictionary<Package, List<SteamManifest>>>;
@@ -50,6 +51,7 @@ namespace TalosDownpatcher {
       data[version][package].Add(new SteamManifest(package, appId, depotId, manifestId, numFiles, size));
     }
 
+    [SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline", Justification = "Refactoring AddManifest would be tricky, so I'm not doing it.")]
     static ManifestData() {
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
       DepotLocation = $"{steamInstall}/steamapps/content";

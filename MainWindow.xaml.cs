@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -104,7 +105,7 @@ namespace TalosDownpatcher {
       }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "CA1801", Justification = "This is inheriting an interface")]
+    [SuppressMessage("Style", "CA1801", Justification = "This is inheriting an interface")]
     private void SettingsButton_Click(object sender, object e) {
       if (settingsWindow == null || !settingsWindow.IsLoaded) {
         Logging.Log("Showing settings window");
