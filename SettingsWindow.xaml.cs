@@ -17,25 +17,23 @@ namespace TalosDownpatcher {
       GehennaCheckbox.IsChecked = settings.ownsGehenna;
       PrototypeCheckbox.IsChecked = settings.ownsPrototype;
       EditorCheckbox.IsChecked = settings.wantsEditor;
-      LaunchModdable.IsChecked = settings.launchModdable;
-      UseSymlinks.IsChecked = settings.useSymlinks;
-      SteamHack.IsChecked = settings.steamHack;
+      ModdableCheckbox.IsChecked = settings.launchModdable;
+      SymlinkCheckbox.IsChecked = settings.useSymlinks;
+      HackCheckbox.IsChecked = settings.steamHack;
 
       // Add hooks so that clicking on text toggles checkboxes
       AllVersionsLabel.PreviewMouseDown += delegate { AllVersionsCheckbox.IsChecked = !AllVersionsCheckbox.IsChecked; };
       GehennaLabel.PreviewMouseDown += delegate { GehennaCheckbox.IsChecked = !GehennaCheckbox.IsChecked; };
       PrototypeLabel.PreviewMouseDown += delegate { PrototypeCheckbox.IsChecked = !PrototypeCheckbox.IsChecked; };
       EditorLabel.PreviewMouseDown += delegate { EditorCheckbox.IsChecked = !EditorCheckbox.IsChecked; };
-      ModdableLabel.PreviewMouseDown += delegate { LaunchModdable.IsChecked = !LaunchModdable.IsChecked; };
-      SymlinkLabel.PreviewMouseDown += delegate { UseSymlinks.IsChecked = !UseSymlinks.IsChecked; };
-      HackLabel.PreviewMouseDown += delegate { SteamHack.IsChecked = !SteamHack.IsChecked; };
+      ModdableLabel.PreviewMouseDown += delegate { ModdableCheckbox.IsChecked = !ModdableCheckbox.IsChecked; };
+      SymlinkLabel.PreviewMouseDown += delegate { SymlinkCheckbox.IsChecked = !SymlinkCheckbox.IsChecked; };
+      HackLabel.PreviewMouseDown += delegate { HackCheckbox.IsChecked = !HackCheckbox.IsChecked; };
 
-      if (!showHiddenSettings) Height -= 25;
-      EditorCheckbox.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
-      EditorLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
-      UseSymlinks.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
+      if (!showHiddenSettings) Height -= 26; // Height of the final row
+      SymlinkCheckbox.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
       SymlinkLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
-      SteamHack.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
+      HackCheckbox.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
       HackLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
     }
 
@@ -65,9 +63,9 @@ namespace TalosDownpatcher {
       settings.ownsGehenna = (bool)GehennaCheckbox.IsChecked;
       settings.ownsPrototype = (bool)PrototypeCheckbox.IsChecked;
       settings.wantsEditor = (bool)EditorCheckbox.IsChecked;
-      settings.launchModdable = (bool)LaunchModdable.IsChecked;
-      settings.useSymlinks = (bool)UseSymlinks.IsChecked;
-      settings.steamHack = (bool)SteamHack.IsChecked;
+      settings.launchModdable = (bool)ModdableCheckbox.IsChecked;
+      settings.useSymlinks = (bool)SymlinkCheckbox.IsChecked;
+      settings.steamHack = (bool)HackCheckbox.IsChecked;
 
       settings.Save(); // Writes to disk
       mainWindow.LoadVersions(); // Reload versions for potential changes
@@ -82,9 +80,9 @@ namespace TalosDownpatcher {
       GehennaCheckbox.IsChecked = false;
       PrototypeCheckbox.IsChecked = false;
       EditorCheckbox.IsChecked = false;
-      LaunchModdable.IsChecked = false;
-      UseSymlinks.IsChecked = false;
-      SteamHack.IsChecked = false;
+      ModdableCheckbox.IsChecked = false;
+      SymlinkCheckbox.IsChecked = false;
+      HackCheckbox.IsChecked = false;
     }
   }
 }
