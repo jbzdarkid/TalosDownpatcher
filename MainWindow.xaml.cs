@@ -27,6 +27,7 @@ namespace TalosDownpatcher {
     internal Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
     private static Dispatcher dispatcher;
+    private static readonly List<int> commonVersions = new List<int> { 440323, 326589, 301136, 244371 };
 
     public MainWindow() {
       InitializeComponent();
@@ -57,10 +58,10 @@ namespace TalosDownpatcher {
       foreach (int version in ManifestData.allVersions) {
         var uiComponent = new VersionUIComponent(version, this.Height - 50, this);
 
-        bool hasMain = depotManager.IsFullyDownloaded(version, Package.Main);
-        bool hasGehenna = depotManager.IsFullyDownloaded(version, Package.Gehenna);
-        bool hasPrototype = depotManager.IsFullyDownloaded(version, Package.Prototype);
-        bool hasEditor = depotManager.IsFullyDownloaded(version, Package.Editor);
+        bool hasMain = DepotManager.IsFullyDownloaded(version, Package.Main);
+        bool hasGehenna = DepotManager.IsFullyDownloaded(version, Package.Gehenna);
+        bool hasPrototype = DepotManager.IsFullyDownloaded(version, Package.Prototype);
+        bool hasEditor = DepotManager.IsFullyDownloaded(version, Package.Editor);
 
         if (hasMain &&
           (!Settings.Default.ownsGehenna || hasGehenna) &&
@@ -80,7 +81,8 @@ namespace TalosDownpatcher {
         }
 
         if (version == installedVersion) {
-          if (uiComponent.State == VersionState.Downloaded && depotManager.IsFullyCopied(installedVersion)) {
+          // TODO: This isn't really "IsFullyCopied", it's more like "Has files we don't have"
+          if (uiComponent.State == VersionState.Downloaded && DepotManager.IsFullyCopied(installedVersion)) {
             // Only mark active if the data is fully copied.
             uiComponent.State = VersionState.Active;
           } else {
@@ -89,7 +91,8 @@ namespace TalosDownpatcher {
         }
 
         if (uiComponent.State != VersionState.NotDownloaded ||
-          ManifestData.commonVersions.Contains(version) ||
+
+          commonVersions.Contains(version) ||
           Settings.Default.showAllVersions ||
           version == installedVersion) {
           // Only add the version if it's downloaded, common, or we're showing all versions

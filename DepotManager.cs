@@ -10,14 +10,10 @@ using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public class DepotManager {
-    private readonly ManifestData manifestData;
-
     private readonly object downloadLock = new object();
     private readonly object versionLock = new object();
 
-    public DepotManager() {
-      manifestData = new ManifestData();
-    }
+    public DepotManager() {}
 
     public void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
       var thread = new Thread(() => { SetActiveVersionInternal(component, onSetActiveVersion); });
@@ -102,17 +98,18 @@ namespace TalosDownpatcher {
         }
 
         var neededManifests = new List<SteamManifest>();
-        if (!IsFullyDownloaded(version, Package.Main)) {
-          neededManifests.AddRange(manifestData[version, Package.Main]);
-        }
+        // @Hack: Disabling main to test editor files
+        // if (!IsFullyDownloaded(version, Package.Main)) {
+        //   neededManifests.AddRange(manifestData[version, Package.Main]);
+        // }
         if (Settings.Default.ownsGehenna && !IsFullyDownloaded(version, Package.Gehenna)) {
-          neededManifests.AddRange(manifestData[version, Package.Gehenna]);
+          neededManifests.AddRange(ManifestData.Get(version, Package.Gehenna));
         }
         if (Settings.Default.ownsPrototype && !IsFullyDownloaded(version, Package.Prototype)) {
-          neededManifests.AddRange(manifestData[version, Package.Prototype]);
+          neededManifests.AddRange(ManifestData.Get(version, Package.Prototype));
         }
         if (Settings.Default.wantsEditor && !IsFullyDownloaded(version, Package.Editor)) {
-          neededManifests.AddRange(manifestData[version, Package.Editor]);
+          neededManifests.AddRange(ManifestData.Get(version, Package.Editor));
         }
         if (neededManifests.Count == 0) {
           Logging.Log($"Attempted to download manifests for {version}, but no manfiests applied.");
@@ -194,23 +191,23 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       component.State = VersionState.Active;
     }
 
-    public bool IsFullyCopied(int version) {
+    public static bool IsFullyCopied(int version) {
       long actualSize = Utils.GetFolderSize($"{Settings.Default.activeVersionLocation}");
 
       long expectedSize = 0;
-      expectedSize += manifestData.GetDownloadSize(version, Package.Main);
-      if (Settings.Default.ownsGehenna) expectedSize += manifestData.GetDownloadSize(version, Package.Gehenna);
-      if (Settings.Default.ownsPrototype) expectedSize += manifestData.GetDownloadSize(version, Package.Prototype);
-      if (Settings.Default.wantsEditor) expectedSize += manifestData.GetDownloadSize(version, Package.Editor);
+      expectedSize += ManifestData.GetDownloadSize(version, Package.Main);
+      if (Settings.Default.ownsGehenna)   expectedSize += ManifestData.GetDownloadSize(version, Package.Gehenna);
+      if (Settings.Default.ownsPrototype) expectedSize += ManifestData.GetDownloadSize(version, Package.Prototype);
+      if (Settings.Default.wantsEditor)   expectedSize += ManifestData.GetDownloadSize(version, Package.Editor);
       Logging.Log("Actual: " + actualSize + " Expected: " + expectedSize + " IsFullyCopied: " + (actualSize >= expectedSize));
       return actualSize >= expectedSize;
     }
 
-    public bool IsFullyDownloaded(int version, Package package) {
+    public static bool IsFullyDownloaded(int version, Package package) {
       long actualSize = Utils.GetFolderSize(GetFolder(version, package));
       if (actualSize == 0) return false;
 
-      long expectedSize = manifestData.GetDownloadSize(version, package);
+      long expectedSize = ManifestData.GetDownloadSize(version, package);
       if (actualSize == expectedSize) return true;
       Logging.Log($"Package {package} for version {version} is {actualSize} bytes, expected {expectedSize}");
       if (actualSize > expectedSize) {

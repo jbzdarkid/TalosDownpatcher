@@ -2,6 +2,8 @@ using Microsoft.Win32;
 using System.Collections.Generic;
 
 namespace TalosDownpatcher {
+  using ManifestDict = Dictionary<int, Dictionary<Package, List<SteamManifest>>>;
+
   public class SteamManifest {
     public readonly Package package;
     public readonly int appId;
@@ -22,10 +24,7 @@ namespace TalosDownpatcher {
     }
   }
 
-  public class ManifestData {
-    public static readonly List<int> commonVersions = new List<int> {
-      440323, 326589, 301136, 244371
-    };
+  public static class ManifestData {
     public static readonly List<int> allVersions = new List<int> {
       440323, 429074, 426014, 424910, 326589, 301136, 300763, 293384,
       291145, 284152, 277544, 269335, 267252, 264510, 260924, 258375,
@@ -33,41 +32,29 @@ namespace TalosDownpatcher {
       243520, 226087, 224995, 224531, 223249, 222477, 221394, 220996,
       220675, 220625, 220480
     };
-
-    // TODO: Replace with readonly once we have a static constructor
-    private static string depotLocation;
-    public static string DepotLocation {
-      get { return depotLocation; }
-    }
-
-    // @Cleanup
-    public static readonly int GEHENNA = 358470;
-    public static readonly int PROTOTYPE = 322022;
-    public static readonly List<int> MAIN_DEPOTS = new List<int> { 257516, 257519, 257511, 257515 };
-    public static readonly List<int> EDITOR_DEPOTS = new List<int> { 257561, 257565 };
-
-    private Dictionary<int, Dictionary<Package, List<SteamManifest>>> data;
+    public static readonly string DepotLocation;
+    private static readonly ManifestDict data;
 
     // Helper function so that data can be private. This also helps the runtime avoid accidentally copying data[version] as an intermediate.
-    public List<SteamManifest> this[int version, Package package] {
-      get { return data[version][package]; }
+    public static List<SteamManifest> Get(int version, Package package) {
+      return data[version][package];
     }
 
-    public long GetDownloadSize(int version, Package package) {
+    public static long GetDownloadSize(int version, Package package) {
       long totalDownloadSize = 0;
-      foreach (var manifest in this[version, package]) totalDownloadSize += manifest.size;
+      foreach (var manifest in Get(version, package)) totalDownloadSize += manifest.size;
       return totalDownloadSize;
     }
 
-    private void AddManifest(int version, Package package, int appId, int depotId, long manifestId, int numFiles, long size) {
+    private static void AddManifest(int version, Package package, int appId, int depotId, long manifestId, int numFiles, long size) {
       data[version][package].Add(new SteamManifest(package, appId, depotId, manifestId, numFiles, size));
     }
 
-    public ManifestData() {
+    static ManifestData() {
       string steamInstall = (string)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", "C:/Program Files (x86)/Steam");
-      depotLocation = $"{steamInstall}/steamapps/content";
+      DepotLocation = $"{steamInstall}/steamapps/content";
 
-      data = new Dictionary<int, Dictionary<Package, List<SteamManifest>>>();
+      data = new ManifestDict();
       foreach (var version in allVersions) {
         data[version] = new Dictionary<Package, List<SteamManifest>>();
         data[version][Package.Main] = new List<SteamManifest>();
