@@ -164,33 +164,40 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
     }
 
     private static void SaveActiveVersion(VersionUIComponent component) {
-      component.State = VersionState.Copying;
+      component.State = VersionState.Saving;
 
-      double totalSize = Utils.GetFolderSize(Settings.Default.activeVersionLocation);
-      long copied = 0;
+      bool mainDownloaded = IsFullyDownloaded(component.version, Package.Main);
+      bool gehennaDownloaded = IsFullyDownloaded(component.version, Package.Gehenna);
+      bool prototypeDownloaded = IsFullyDownloaded(component.version, Package.Prototype);
+      bool editorDownloaded = IsFullyDownloaded(component.version, Package.Editor);
+
+      double copiedFiles = 0;
 
       var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
-      foreach (var file in src.EnumerateFiles("*", SearchOption.AllDirectories)) {
-        // This .Replace is a little bit gross, I'd rather have a 'relative path to activeVersionLocation'. But it works.
-        var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, DeterminePackage(file.Name)));
-        Utils.FCopy(file.FullName, dest, delegate (long fileSize) {
-          copied += fileSize;
-          component.SetProgress(copied / totalSize);
-        });
+      var files = src.GetFiles("*", SearchOption.AllDirectories);
+      foreach (var file in files) {
+        var package = DeterminePackage(file.FullName);
+        if ((package == Package.Main && !mainDownloaded)
+          || (package == Package.Gehenna && !gehennaDownloaded)
+          || (package == Package.Prototype && !prototypeDownloaded)
+          || (package == Package.Editor && !editorDownloaded)) {
+          // This .Replace is a little bit gross, I'd rather have a 'relative path to activeVersionLocation'. But it works.
+          var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, package));
+          Utils.FCopy(file.FullName, dest, delegate (long fileSize) {
+            copiedFiles++;
+            component.SetProgress(copiedFiles / files.Length);
+          });
+        }
       }
 
       component.State = VersionState.Active;
     }
 
-
-
-
-
-
+    #region utilities
 
     public static bool IsFullyCopied(int version) {
       long actualSize = Utils.GetFolderSize($"{Settings.Default.activeVersionLocation}");
-
+    
       long expectedSize = 0;
       expectedSize += ManifestData.GetDownloadSize(version, Package.Main);
       if (Settings.Default.ownsGehenna)   expectedSize += ManifestData.GetDownloadSize(version, Package.Gehenna);
@@ -289,5 +296,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       foreach (var dir in src.GetDirectories()) CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", onCopyBytes);
       foreach (var file in src.GetFiles()) Utils.FCopy(file.FullName, $"{dst}/{file.Name}", onCopyBytes);
     }
+
+    #endregion
   }
 }

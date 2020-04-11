@@ -15,7 +15,7 @@ using TalosDownpatcher.Properties;
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
 // TODO: Warn when trying to download with steam hack deactivated
-// TODO: Better determination of "steam has files that we don't"
+// TODO: Remove files which are not selected from the active version (at some point in time)
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
