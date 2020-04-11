@@ -14,9 +14,9 @@ using TalosDownpatcher.Properties;
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
 // TODO: File chooser for version location?
-// TODO: Extract editor from steam download (aka the download_depots fallback) -- this sucks, editor files are very different
 // TODO: UI thread hanging while waiting for game to launch (??!!)
 // TODO: Warn when trying to download with steam hack deactivated
+// TODO: Better determination of "steam has files that we don't"
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)

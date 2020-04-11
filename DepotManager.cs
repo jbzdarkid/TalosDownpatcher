@@ -181,7 +181,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
       foreach (var file in src.EnumerateFiles("*", SearchOption.AllDirectories)) {
         // This .Replace is a little bit gross, I'd rather have a 'relative path to activeVersionLocation'. But it works.
-        var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, DeterminePackage(file)));
+        var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, DeterminePackage(file.Name)));
         Utils.FCopy(file.FullName, dest, delegate (long fileSize) {
           copied += fileSize;
           component.SetProgress(copied / totalSize);
@@ -240,12 +240,31 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       return 0;
     }
 
-    private static Package DeterminePackage(FileInfo file) {
-      if (file.Name.StartsWith("DLC_01_Road_To_Gehenna", StringComparison.OrdinalIgnoreCase)) {
+    static List<string> editorFiles = new List<string>{
+        "GISolver.exe",
+        "ImportExportFBX.dll",
+        "Talos_SeriousEditor.exe",
+        "TexDXT.dll",
+        "SECmd.exe",
+        "ImportExportFBX2015.dll",
+        "ImportExportFBX2016.dll",
+        "ImportExportFBX2018.dll",
+        "ReplaceHistory.txt",
+        "ApplySetting.lua",
+        "ApplySettingEgypt.lua",
+        "ApplySettingGeneric.lua",
+        "ApplySettingMedieval.lua",
+        "ApplySettingRome.lua",
+        "ApplySettingStone.lua",
+        "ApplySettingWood.lua",
+      };
+
+    private static Package DeterminePackage(string file) {
+      if (file.StartsWith("DLC_01_Road_To_Gehenna", StringComparison.OrdinalIgnoreCase)) {
         return Package.Gehenna;
-      } else if (file.Name.StartsWith("DLC_Prototype", StringComparison.OrdinalIgnoreCase)) {
+      } else if (file.StartsWith("DLC_Prototype", StringComparison.OrdinalIgnoreCase)) {
         return Package.Prototype;
-      } else if (/* something to do with editor*/ false) {
+      } else if (editorFiles.Contains(file) || file.EndsWith("_edit.gro", StringComparison.OrdinalIgnoreCase)) {
         return Package.Editor;
       } else {
         return Package.Main;
