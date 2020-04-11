@@ -51,8 +51,8 @@ namespace TalosDownpatcher {
       if (!string.IsNullOrWhiteSpace(location)) {
         var dir = new DirectoryInfo(location);
         if (!dir.Exists) dir.Create();
-        settings.activeVersionLocation = location;
-        ActiveBox.Text = location;
+        settings.oldVersionLocation = location;
+        InactiveBox.Text = location;
       }
     }
 
