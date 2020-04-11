@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -14,8 +13,10 @@ using TalosDownpatcher.Properties;
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
+
 // TODO: Warn when trying to download with steam hack deactivated
 // TODO: Remove files which are not selected from the active version (at some point in time)
+// TODO: SaveActiveVersionAsync early -- and make sure that the state is working properly.
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
