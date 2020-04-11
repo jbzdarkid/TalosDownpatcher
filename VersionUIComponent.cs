@@ -36,41 +36,37 @@ namespace TalosDownpatcher {
       this.version = version;
       this.mainWindow = mainWindow;
 
-      versionBox = new TextBox();
-      versionBox.HorizontalAlignment = HorizontalAlignment.Left;
-      versionBox.VerticalAlignment = VerticalAlignment.Top;
-      versionBox.Height = 21;
-      versionBox.Width = 51;
-      versionBox.Margin = new Thickness(10, yPos, 0, 0);
-      versionBox.Text = version.ToString("F0", CultureInfo.InvariantCulture);
-      versionBox.IsReadOnly = true;
+      versionBox = new TextBox {
+        HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        Height = 21, Width = 51,
+        Margin = new Thickness(10, yPos, 0, 0),
+        Text = version.ToString("F0", CultureInfo.InvariantCulture),
+        IsReadOnly = true
+      };
       mainWindow.RootGrid.Children.Add(versionBox);
 
-      downloadBar = new Rectangle();
-      downloadBar.HorizontalAlignment = HorizontalAlignment.Left;
-      downloadBar.VerticalAlignment = VerticalAlignment.Top;
-      downloadBar.Height = 21;
-      downloadBar.Width = 1;
-      downloadBar.Margin = new Thickness(60, yPos, 0, 0);
-      downloadBar.Fill = new SolidColorBrush(Colors.Green);
+      downloadBar = new Rectangle {
+        HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        Height = 21, Width = 1,
+        Margin = new Thickness(60, yPos, 0, 0),
+        Fill = new SolidColorBrush(Colors.Green)
+      };
       mainWindow.RootGrid.Children.Add(downloadBar);
 
-      stateBox = new TextBox();
-      stateBox.HorizontalAlignment = HorizontalAlignment.Left;
-      stateBox.VerticalAlignment = VerticalAlignment.Top;
-      stateBox.Height = 21;
-      stateBox.Width = 121;
-      stateBox.Margin = new Thickness(60, yPos, 0, 0);
-      stateBox.Background = Brushes.Transparent;
-      stateBox.IsReadOnly = true;
+      stateBox = new TextBox {
+        HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        Height = 21, Width = 121,
+        Margin = new Thickness(60, yPos, 0, 0),
+        Background = Brushes.Transparent,
+        IsReadOnly = true
+      };
       mainWindow.RootGrid.Children.Add(stateBox);
 
-      actionButton = new Button();
-      actionButton.HorizontalAlignment = HorizontalAlignment.Left;
-      actionButton.VerticalAlignment = VerticalAlignment.Top;
-      actionButton.Height = 21;
-      actionButton.Width = 71;
-      actionButton.Margin = new Thickness(180, yPos, 0, 0);
+      actionButton = new Button {
+        HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        Height = 21, Width = 71,
+        Margin = new Thickness(180, yPos, 0, 0)
+      };
       mainWindow.RootGrid.Children.Add(actionButton);
     }
 

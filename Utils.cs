@@ -85,7 +85,7 @@ namespace TalosDownpatcher {
     /// <param name="destination">Destination file path</param> 
     /// <param name="onCopyBytes">Callback to fire after copying bytes (used for progress bars)</param>
     [SuppressMessage("Style", "IDE1005", Justification = "The if check is relevant, as onCopyBytes may be null.")]
-    internal static void FCopy(string source, string destination, Action<long> onCopyBytes) {
+    internal static void FCopy(string source, string destination, Action<long> onCopyBytes = null) {
       int buffSize = (1 << 20); // 1 MB
       byte[] buff = new byte[buffSize];
       using (FileStream fsread = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.None, buffSize)) {
