@@ -13,7 +13,6 @@ using TalosDownpatcher.Properties;
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
-// TODO: File chooser for version location?
 // TODO: UI thread hanging while waiting for game to launch (??!!)
 // TODO: Warn when trying to download with steam hack deactivated
 // TODO: Better determination of "steam has files that we don't"

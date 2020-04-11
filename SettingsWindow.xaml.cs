@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using WinForms = System.Windows.Forms;
 using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
@@ -37,6 +38,24 @@ namespace TalosDownpatcher {
       HackLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
     }
 
+    private void SetActiveLocation(string location) {
+      if (!string.IsNullOrWhiteSpace(location)) {
+        var dir = new DirectoryInfo(location);
+        if (!dir.Exists) dir.Create();
+        settings.activeVersionLocation = location;
+        ActiveBox.Text = location;
+      }
+    }
+
+    private void SetInactiveLocation(string location) {
+      if (!string.IsNullOrWhiteSpace(location)) {
+        var dir = new DirectoryInfo(location);
+        if (!dir.Exists) dir.Create();
+        settings.activeVersionLocation = location;
+        ActiveBox.Text = location;
+      }
+    }
+
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
       if (mainWindow.ActionInProgress()) {
         Logging.MessageBox($"Cannot save settings while an operation is in progress.", "Error");
@@ -47,17 +66,8 @@ namespace TalosDownpatcher {
         Logging.MessageBox($"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.", "Warning");
       }
 
-      if (!string.IsNullOrWhiteSpace(ActiveBox.Text)) {
-        var dir = new DirectoryInfo(ActiveBox.Text);
-        if (!dir.Exists) dir.Create();
-        settings.activeVersionLocation = ActiveBox.Text;
-      }
-
-      if (!string.IsNullOrWhiteSpace(InactiveBox.Text)) {
-        var dir = new DirectoryInfo(InactiveBox.Text);
-        if (!dir.Exists) dir.Create();
-        settings.oldVersionLocation = InactiveBox.Text;
-      }
+      SetActiveLocation(ActiveBox.Text);
+      SetInactiveLocation(InactiveBox.Text);
 
       settings.showAllVersions = (bool)AllVersionsCheckbox.IsChecked;
       settings.ownsGehenna = (bool)GehennaCheckbox.IsChecked;
@@ -83,6 +93,22 @@ namespace TalosDownpatcher {
       ModdableCheckbox.IsChecked = false;
       SymlinkCheckbox.IsChecked = false;
       HackCheckbox.IsChecked = false;
+    }
+
+    private void ActiveLocation_Click(object sender, RoutedEventArgs e) {
+      using (var dialog = new WinForms.FolderBrowserDialog()) {
+        if (dialog.ShowDialog() == WinForms.DialogResult.OK) {
+          SetActiveLocation(dialog.SelectedPath);
+        }
+      }
+    }
+
+    private void InactiveLocation_Click(object sender, RoutedEventArgs e) {
+      using (var dialog = new WinForms.FolderBrowserDialog()) {
+        if (dialog.ShowDialog() == WinForms.DialogResult.OK) {
+          SetInactiveLocation(dialog.SelectedPath);
+        }
+      }
     }
   }
 }
