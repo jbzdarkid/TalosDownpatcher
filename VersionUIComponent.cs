@@ -179,9 +179,9 @@ namespace TalosDownpatcher {
                     Arguments = "LaunchOldVersion" + (Settings.Default.launchModdable ? " Moddable" : ""),
                   });
                 } else if (Settings.Default.launchModdable) {
-                  SteamCommand.StartModdableGame();
+                  Utils.RunAsync(delegate { SteamCommand.StartModdableGame(); });
                 } else {
-                  SteamCommand.StartGame();
+                  Utils.RunAsync(delegate { SteamCommand.StartGame(); });
                 }
               });
               break;

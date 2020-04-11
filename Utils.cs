@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Windows;
 
 namespace TalosDownpatcher {
@@ -59,6 +60,12 @@ namespace TalosDownpatcher {
         foreach (var file in files) size += file.Length;
       }
       return size;
+    }
+
+    internal static void RunAsync(Action func) {
+      var thread = new Thread(() => { func(); });
+      thread.IsBackground = true;
+      thread.Start();
     }
 
     /// <summary>

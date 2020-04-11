@@ -14,9 +14,7 @@ namespace TalosDownpatcher {
     private static readonly object versionLock = new object();
 
     public static void SetActiveVersionAsync(VersionUIComponent component, Action onSetActiveVersion) {
-      var thread = new Thread(() => { SetActiveVersion(component, onSetActiveVersion); });
-      thread.IsBackground = true;
-      thread.Start();
+      Utils.RunAsync(delegate { SetActiveVersion(component, onSetActiveVersion); });
     }
 
     private static void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
@@ -77,9 +75,7 @@ namespace TalosDownpatcher {
     }
 
     public static void DownloadDepotsAsync(VersionUIComponent component) {
-      var thread = new Thread(() => { DownloadDepots(component); });
-      thread.IsBackground = true;
-      thread.Start();
+      Utils.RunAsync(delegate { DownloadDepots(component); });
     }
 
     private static void DownloadDepots(VersionUIComponent component) {
@@ -164,9 +160,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
     }
 
     public static void SaveActiveVersionAsync(VersionUIComponent component) {
-      var thread = new Thread(() => { SaveActiveVersion(component); });
-      thread.IsBackground = true;
-      thread.Start();
+      Utils.RunAsync(delegate { SaveActiveVersion(component); });
     }
 
     private static void SaveActiveVersion(VersionUIComponent component) {
