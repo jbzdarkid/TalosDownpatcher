@@ -230,7 +230,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       byte[] buff = new byte[buffSize];
       using (FileStream fsread = talos.OpenRead()) {
         using (BinaryReader bwread = new BinaryReader(fsread)) {
-          for (; ; ) {
+          while (true) {
             int readBytes = bwread.Read(buff, 0, buffSize);
             if (readBytes == 0) break;
             int index = Utils.Find(buff, Encoding.ASCII.GetBytes("Talos-Windows-Final"));
