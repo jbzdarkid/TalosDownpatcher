@@ -9,19 +9,17 @@ using System.Threading;
 using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
-  public class DepotManager {
-    private readonly object downloadLock = new object();
-    private readonly object versionLock = new object();
+  public static class DepotManager {
+    private static readonly object downloadLock = new object();
+    private static readonly object versionLock = new object();
 
-    public DepotManager() {}
-
-    public void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
-      var thread = new Thread(() => { SetActiveVersionInternal(component, onSetActiveVersion); });
+    public static void SetActiveVersionAsync(VersionUIComponent component, Action onSetActiveVersion) {
+      var thread = new Thread(() => { SetActiveVersion(component, onSetActiveVersion); });
       thread.IsBackground = true;
       thread.Start();
     }
 
-    private void SetActiveVersionInternal(VersionUIComponent component, Action onSetActiveVersion) {
+    private static void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
       Contract.Requires(component != null && onSetActiveVersion != null);
       string activeVersionLocation = Settings.Default.activeVersionLocation;
 
@@ -78,13 +76,13 @@ namespace TalosDownpatcher {
       }
     }
 
-    public void DownloadDepots(VersionUIComponent component) {
-      var thread = new Thread(() => { DownloadDepotsInternal(component); });
+    public static void DownloadDepotsAsync(VersionUIComponent component) {
+      var thread = new Thread(() => { DownloadDepots(component); });
       thread.IsBackground = true;
       thread.Start();
     }
 
-    private void DownloadDepotsInternal(VersionUIComponent component) {
+    private static void DownloadDepots(VersionUIComponent component) {
       Contract.Requires(component != null);
       component.State = VersionState.DownloadPending; // Pending until we lock
       lock (downloadLock) {
@@ -98,10 +96,9 @@ namespace TalosDownpatcher {
         }
 
         var neededManifests = new List<SteamManifest>();
-        // @Hack: Disabling main to test editor files
-        // if (!IsFullyDownloaded(version, Package.Main)) {
-        //   neededManifests.AddRange(manifestData[version, Package.Main]);
-        // }
+        if (!IsFullyDownloaded(version, Package.Main)) {
+          neededManifests.AddRange(ManifestData.Get(version, Package.Main));
+        }
         if (Settings.Default.ownsGehenna && !IsFullyDownloaded(version, Package.Gehenna)) {
           neededManifests.AddRange(ManifestData.Get(version, Package.Gehenna));
         }
@@ -166,13 +163,13 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       }
     }
 
-    public static void SaveActiveVersion(VersionUIComponent component) {
-      var thread = new Thread(() => { SaveActiveVersionInternal(component); });
+    public static void SaveActiveVersionAsync(VersionUIComponent component) {
+      var thread = new Thread(() => { SaveActiveVersion(component); });
       thread.IsBackground = true;
       thread.Start();
     }
 
-    private static void SaveActiveVersionInternal(VersionUIComponent component) {
+    private static void SaveActiveVersion(VersionUIComponent component) {
       component.State = VersionState.Copying;
 
       double totalSize = Utils.GetFolderSize(Settings.Default.activeVersionLocation);
@@ -190,6 +187,12 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
 
       component.State = VersionState.Active;
     }
+
+
+
+
+
+
 
     public static bool IsFullyCopied(int version) {
       long actualSize = Utils.GetFolderSize($"{Settings.Default.activeVersionLocation}");
@@ -240,7 +243,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
       return 0;
     }
 
-    static List<string> editorFiles = new List<string>{
+    static readonly List<string> editorFiles = new List<string>{
         "GISolver.exe",
         "ImportExportFBX.dll",
         "Talos_SeriousEditor.exe",
@@ -282,16 +285,6 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not en
         return "";
       }
     }
-
-    // private static void MoveMatching(string srcFolder, string dstFolder, string searchPattern) {
-    //   var src = new DirectoryInfo(srcFolder);
-    //   if (!src.Exists) return;
-    //   var dst = new DirectoryInfo(dstFolder);
-    //   if (!dst.Exists) Directory.CreateDirectory(dstFolder);
-    // 
-    //   foreach (var dir in src.GetDirectories()) MoveMatching($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", searchPattern);
-    //   foreach (var file in src.GetFiles(searchPattern)) file.MoveTo(dstFolder);
-    // }
 
     private static void CopyAndOverwrite(string srcFolder, string dstFolder, Action<long> onCopyBytes = null) {
       var src = new DirectoryInfo(srcFolder);

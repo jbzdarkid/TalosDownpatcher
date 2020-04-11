@@ -24,7 +24,6 @@ using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
   public partial class MainWindow : Window {
-    internal DepotManager depotManager = new DepotManager();
     internal Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
     private static Dispatcher dispatcher;

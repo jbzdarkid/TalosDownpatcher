@@ -26,6 +26,7 @@ namespace TalosDownpatcher {
   public class VersionUIComponent : IDisposable {
     private readonly MainWindow mainWindow;
 
+    public readonly int version;
     private TextBox versionBox;
     private Rectangle downloadBar;
     private TextBox stateBox;
@@ -98,7 +99,6 @@ namespace TalosDownpatcher {
       }
     }
 
-    public readonly int version;
     private VersionState state;
     public VersionState State {
       get {
@@ -117,14 +117,14 @@ namespace TalosDownpatcher {
               stateBox.Text = "Not Downloaded";
               actionButton.Content = "Download";
               SetOnClick(actionButton, delegate {
-                mainWindow.depotManager.DownloadDepots(this);
+                DepotManager.DownloadDepotsAsync(this);
               });
               break;
             case VersionState.PartiallyDownloaded:
               stateBox.Text = "Partially Downloaded";
               actionButton.Content = "Redownload";
               SetOnClick(actionButton, delegate {
-                mainWindow.depotManager.DownloadDepots(this);
+                DepotManager.DownloadDepotsAsync(this);
               });
               break;
             case VersionState.DownloadPending:
@@ -147,7 +147,7 @@ namespace TalosDownpatcher {
               stateBox.Text = "Downloaded";
               actionButton.Content = "Set Active";
               SetOnClick(actionButton, delegate {
-                mainWindow.depotManager.SetActiveVersion(this, delegate {
+                DepotManager.SetActiveVersionAsync(this, delegate {
                   // Mark the current active version as inactive. Delayed to account for queueing.
                   int activeVersion = Settings.Default.activeVersion;
                   if (mainWindow.uiComponents.ContainsKey(activeVersion)) {
@@ -189,7 +189,7 @@ namespace TalosDownpatcher {
               stateBox.Text = "Active in Steam";
               actionButton.Content = "Copy";
               SetOnClick(actionButton, delegate {
-                DepotManager.SaveActiveVersion(this);
+                DepotManager.SaveActiveVersionAsync(this);
               });
               break;
           }
