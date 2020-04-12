@@ -171,8 +171,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
       bool prototypeDownloaded = IsFullyDownloaded(component.version, Package.Prototype);
       bool editorDownloaded = IsFullyDownloaded(component.version, Package.Editor);
 
-      double copiedFiles = 0;
-
+      double processedFiles = 0;
       var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
       var files = src.GetFiles("*", SearchOption.AllDirectories);
       foreach (var file in files) {
@@ -183,10 +182,33 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
           || (package == Package.Editor && !editorDownloaded)) {
           // This .Replace is a little bit gross, I'd rather have a 'relative path to activeVersionLocation'. But it works.
           var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, package));
-          Utils.FCopy(file.FullName, dest, delegate (long fileSize) {
-            copiedFiles++;
-            component.SetProgress(copiedFiles / files.Length);
-          });
+          Utils.FCopy(file.FullName, dest);
+          processedFiles++;
+          component.SetProgress(processedFiles / files.Length);
+        }
+      }
+
+      DeleteExtraFiles(component);
+    }
+
+    public static void DeleteExtraFilesAsync(VersionUIComponent component) {
+      Utils.RunAsync(delegate { DeleteExtraFiles(component); });
+    }
+
+    private static void DeleteExtraFiles(VersionUIComponent component) {
+      component.State = VersionState.Cleaning;
+
+      double processedFiles = 0;
+      var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
+      var files = src.GetFiles("*", SearchOption.AllDirectories);
+      foreach (var file in files) {
+        var package = DeterminePackage(file.FullName);
+        if ((package == Package.Gehenna && !Settings.Default.ownsGehenna)
+        || (package == Package.Prototype && !Settings.Default.ownsPrototype)
+        || (package == Package.Editor && !Settings.Default.wantsEditor)) {
+          file.Delete();
+          processedFiles++;
+          component.SetProgress(processedFiles / files.Length);
         }
       }
 

@@ -18,8 +18,8 @@ namespace TalosDownpatcher {
     Downloaded,
     CopyPending,
     Copying,
+    Cleaning,
     Active,
-    ActiveSteam,
   };
 
   public class VersionUIComponent : IDisposable {
@@ -82,13 +82,13 @@ namespace TalosDownpatcher {
         case VersionState.PartiallyDownloaded:
         case VersionState.Downloaded:
         case VersionState.Active:
-        case VersionState.ActiveSteam:
           return false;
         case VersionState.DownloadPending:
         case VersionState.Downloading:
         case VersionState.Saving:
         case VersionState.CopyPending:
         case VersionState.Copying:
+        case VersionState.Cleaning:
         default:
           return true;
       }
@@ -161,6 +161,11 @@ namespace TalosDownpatcher {
               actionButton.Content = "Play";
               SetOnClick(actionButton, null);
               break;
+            case VersionState.Cleaning:
+              stateBox.Text = "Cleaning";
+              actionButton.Content = "Play";
+              SetOnClick(actionButton, null);
+              break;
             case VersionState.Active:
               SetProgress(0.0);
               stateBox.Text = "Active";
@@ -178,13 +183,6 @@ namespace TalosDownpatcher {
                 } else {
                   Utils.RunAsync(delegate { SteamCommand.StartGame(); });
                 }
-              });
-              break;
-            case VersionState.ActiveSteam:
-              stateBox.Text = "Active in Steam";
-              actionButton.Content = "Copy";
-              SetOnClick(actionButton, delegate {
-                DepotManager.SaveActiveVersionAsync(this);
               });
               break;
           }
