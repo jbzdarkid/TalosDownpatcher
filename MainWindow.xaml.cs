@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +14,9 @@ using TalosDownpatcher.Properties;
 // ^ This is also a lot of work, and complexity, that nobody really cares about. Stability > features
 // TODO: Some way to "delete" a download through the UI?
 // ^ Maybe just add an "Open old versions location" button in settings.
+// TODO: It's a little sloppy to run LoadVersions on the UI thread
+
+// TODO: Remove Settings.activeVersion
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
@@ -22,13 +26,11 @@ namespace TalosDownpatcher {
   public partial class MainWindow : Window {
     internal Dictionary<int, VersionUIComponent> uiComponents = new Dictionary<int, VersionUIComponent>();
     private SettingsWindow settingsWindow = null;
-    private static Dispatcher dispatcher;
     private static readonly List<int> commonVersions = new List<int> { 440323, 326589, 301136, 244371 };
 
     public MainWindow() {
       InitializeComponent();
       LoadVersions();
-      dispatcher = Dispatcher; // Saved statically so that we can consistently dispatch from any thread
     }
 
     public bool ActionInProgress() {
@@ -42,7 +44,10 @@ namespace TalosDownpatcher {
 
     public void LoadVersions() {
       // Ensure that it's safe to discard state
-      if (ActionInProgress()) return;
+      if (ActionInProgress()) {
+        Debug.Assert(false);
+        return;
+      }
       foreach (var uiComponent in uiComponents.Values) {
         uiComponent.Dispose();
       }
@@ -117,10 +122,9 @@ namespace TalosDownpatcher {
     }
 
     public static void SetForeground() {
-      dispatcher.Invoke(delegate {
+      Application.Current.Dispatcher.Invoke(delegate {
         Logging.Log("Setting as foreground window");
-        var mainWindow = (MainWindow)Application.Current.MainWindow;
-        mainWindow.Activate();
+        ((MainWindow)Application.Current.MainWindow).Activate();
       });
     }
   }

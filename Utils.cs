@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 
@@ -62,8 +64,11 @@ namespace TalosDownpatcher {
       return size;
     }
 
+    // https://stackoverflow.com/a/1310148
+    [MethodImpl(MethodImplOptions.NoInlining)]
     internal static void RunAsync(Action func) {
       var thread = new Thread(() => { func(); });
+      thread.Name = new StackFrame(1, true).GetMethod().Name;
       thread.IsBackground = true;
       thread.Start();
     }

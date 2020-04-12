@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
 namespace TalosDownpatcher {
@@ -188,20 +189,20 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
       bool editorDownloaded = IsFullyDownloaded(component.version, Package.Editor);
 
       double processedFiles = 0;
-      var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
-      var files = src.GetFiles("*", SearchOption.AllDirectories);
-      foreach (var file in files) {
-        var package = DeterminePackage(file.FullName);
+
+      var files = GetRelativeFiles(Settings.Default.activeVersionLocation);
+      foreach (var (stem, relativePath) in files) {
+        var package = DeterminePackage(stem);
         if ((package == Package.Main && !mainDownloaded)
           || (package == Package.Gehenna && !gehennaDownloaded)
           || (package == Package.Prototype && !prototypeDownloaded)
           || (package == Package.Editor && !editorDownloaded)) {
-          // This .Replace is a little bit gross, I'd rather have a 'relative path to activeVersionLocation'. But it works.
-          var dest = file.FullName.Replace(src.FullName, GetFolder(component.version, package));
-          Utils.FCopy(file.FullName, dest);
-          processedFiles++;
-          component.SetProgress(processedFiles / files.Length);
+          var src = $"{Settings.Default.activeVersionLocation}{Path.DirectorySeparatorChar}{relativePath}";
+          var dst = $"{GetFolder(component.version, package)}{Path.DirectorySeparatorChar}{relativePath}";
+          Utils.FCopy(src, dst);
         }
+        processedFiles++;
+        component.SetProgress(processedFiles / files.Count);
       }
 
       DeleteExtraFiles(component);
@@ -218,14 +219,14 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
       var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
       var files = src.GetFiles("*", SearchOption.AllDirectories);
       foreach (var file in files) {
-        var package = DeterminePackage(file.FullName);
+        var package = DeterminePackage(file.Name);
         if ((package == Package.Gehenna && !Settings.Default.ownsGehenna)
         || (package == Package.Prototype && !Settings.Default.ownsPrototype)
         || (package == Package.Editor && !Settings.Default.wantsEditor)) {
           file.Delete();
-          processedFiles++;
-          component.SetProgress(processedFiles / files.Length);
         }
+        processedFiles++;
+        component.SetProgress(processedFiles / files.Length);
       }
 
       component.State = VersionState.Active;
@@ -234,15 +235,16 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
     #region utilities
 
     public static bool IsFullyCopied(int version) {
-      long actualSize = Utils.GetFolderSize($"{Settings.Default.activeVersionLocation}");
-    
-      long expectedSize = 0;
-      expectedSize += ManifestData.GetDownloadSize(version, Package.Main);
-      if (Settings.Default.ownsGehenna)   expectedSize += ManifestData.GetDownloadSize(version, Package.Gehenna);
-      if (Settings.Default.ownsPrototype) expectedSize += ManifestData.GetDownloadSize(version, Package.Prototype);
-      if (Settings.Default.wantsEditor)   expectedSize += ManifestData.GetDownloadSize(version, Package.Editor);
-      Logging.Log("Actual: " + actualSize + " Expected: " + expectedSize + " IsFullyCopied: " + (actualSize >= expectedSize));
-      return actualSize >= expectedSize;
+      var files = GetRelativeFiles(GetFolder(version, Package.Main));
+      if (Settings.Default.ownsGehenna) files.AddRange(GetRelativeFiles(GetFolder(version, Package.Gehenna)));
+      if (Settings.Default.ownsPrototype) files.AddRange(GetRelativeFiles(GetFolder(version, Package.Prototype)));
+      if (Settings.Default.wantsEditor) files.AddRange(GetRelativeFiles(GetFolder(version, Package.Editor)));
+
+      foreach (var (stem, relativePath) in files) {
+        var dst = new FileInfo($"{Settings.Default.activeVersionLocation}{Path.DirectorySeparatorChar}{relativePath}");
+        if (!dst.Exists) return false;
+      }
+      return true;
     }
 
     public static bool IsFullyDownloaded(int version, Package package) {
@@ -314,7 +316,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
     }
 
     private static string GetFolder(int version, Package package) {
-      string folder = $"{Settings.Default.oldVersionLocation}/{version}";
+      string folder = $"{Settings.Default.oldVersionLocation}{Path.DirectorySeparatorChar}{version}";
       if (package == Package.Main) return folder;
       else if (package == Package.Gehenna) return folder + "_Gehenna";
       else if (package == Package.Prototype) return folder + "_Prototype";
@@ -333,6 +335,16 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
 
       foreach (var dir in src.GetDirectories()) CopyAndOverwrite($"{srcFolder}/{dir}", $"{dstFolder}/{dir}", onCopyBytes);
       foreach (var file in src.GetFiles()) Utils.FCopy(file.FullName, $"{dst}/{file.Name}", onCopyBytes);
+    }
+
+    private static List<(string, string)> GetRelativeFiles(string rootFolder) {
+      var files = new List<(string, string)>();
+      var dst = new DirectoryInfo(rootFolder);
+      if (!dst.Exists) return files;
+      foreach (var file in dst.GetFiles("*", SearchOption.AllDirectories)) {
+        files.Add((file.Name, file.FullName.Replace(rootFolder, "")));
+      }
+      return files;
     }
 
     #endregion
