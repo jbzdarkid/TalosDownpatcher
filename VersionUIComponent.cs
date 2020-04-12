@@ -18,7 +18,6 @@ namespace TalosDownpatcher {
     Downloaded,
     CopyPending,
     Copying,
-    Cleaning,
     Active,
   };
 
@@ -88,7 +87,6 @@ namespace TalosDownpatcher {
         case VersionState.Saving:
         case VersionState.CopyPending:
         case VersionState.Copying:
-        case VersionState.Cleaning:
         default:
           return true;
       }
@@ -158,11 +156,6 @@ namespace TalosDownpatcher {
               break;
             case VersionState.Copying:
               stateBox.Text = "Copying";
-              actionButton.Content = "Play";
-              SetOnClick(actionButton, null);
-              break;
-            case VersionState.Cleaning:
-              stateBox.Text = "Cleaning";
               actionButton.Content = "Play";
               SetOnClick(actionButton, null);
               break;

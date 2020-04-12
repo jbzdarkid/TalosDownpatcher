@@ -62,9 +62,12 @@ namespace TalosDownpatcher {
         return;
       }
 
-      if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked)
-        || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
-        Logging.MessageBox("Warning", $"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.");
+      // If the user can download depots, and they're just now turning on gehenna or prototype, warn them about hangs.
+      if ((bool)HackCheckbox.IsChecked) {
+        if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked)
+          || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
+          Logging.MessageBox("Warning", $"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.");
+        }
       }
 
       SetActiveLocation(ActiveBox.Text);

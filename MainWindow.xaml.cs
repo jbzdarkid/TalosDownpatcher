@@ -16,7 +16,9 @@ using TalosDownpatcher.Properties;
 // ^ Maybe just add an "Open old versions location" button in settings.
 // TODO: It's a little sloppy to run LoadVersions on the UI thread
 
+// TODO: Blacklist certain root folders (Package.None ?) when saving from steam
 // TODO: Remove Settings.activeVersion
+// TODO: Potentially make SetActiveVersion smarter, we could just delete extra + copy required.
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
@@ -81,11 +83,11 @@ namespace TalosDownpatcher {
         }
 
         if (version == installedVersion) {
-          DepotManager.SaveActiveVersionAsync(uiComponent); // Save any additional files that we find in the active version location
           if (uiComponent.State == VersionState.Downloaded && DepotManager.IsFullyCopied(installedVersion)) {
             // Only mark active if the data is fully copied.
             uiComponent.State = VersionState.Active;
           }
+          DepotManager.SaveActiveVersionAsync(uiComponent); // Save any additional files that we find in the active version location
         }
 
         // Only add the version if it's downloaded, common, active in steam, or we're showing all versions

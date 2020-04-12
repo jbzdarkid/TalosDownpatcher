@@ -181,6 +181,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
     }
 
     private static void SaveActiveVersion(VersionUIComponent component) {
+      var previousState = component.State;
       component.State = VersionState.Saving;
 
       bool mainDownloaded = IsFullyDownloaded(component.version, Package.Main);
@@ -190,6 +191,7 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
 
       double processedFiles = 0;
 
+      // There is an optimization here, where we could move instead of Copy & Delete -- but it's an edge case, so I'm not worried about it.
       var files = GetRelativeFiles(Settings.Default.activeVersionLocation);
       foreach (var (stem, relativePath) in files) {
         var package = DeterminePackage(stem);
@@ -201,35 +203,17 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
           var dst = $"{GetFolder(component.version, package)}{Path.DirectorySeparatorChar}{relativePath}";
           Utils.FCopy(src, dst);
         }
+        if ((package == Package.Gehenna && !Settings.Default.ownsGehenna)
+        || (package == Package.Prototype && !Settings.Default.ownsPrototype)
+        || (package == Package.Editor && !Settings.Default.wantsEditor)) {
+          var src = new FileInfo($"{Settings.Default.activeVersionLocation}{Path.DirectorySeparatorChar}{relativePath}");
+          src.Delete();
+        }
         processedFiles++;
         component.SetProgress(processedFiles / files.Count);
       }
 
-      DeleteExtraFiles(component);
-    }
-
-    public static void DeleteExtraFilesAsync(VersionUIComponent component) {
-      Utils.RunAsync(delegate { DeleteExtraFiles(component); });
-    }
-
-    private static void DeleteExtraFiles(VersionUIComponent component) {
-      component.State = VersionState.Cleaning;
-
-      double processedFiles = 0;
-      var src = new DirectoryInfo(Settings.Default.activeVersionLocation);
-      var files = src.GetFiles("*", SearchOption.AllDirectories);
-      foreach (var file in files) {
-        var package = DeterminePackage(file.Name);
-        if ((package == Package.Gehenna && !Settings.Default.ownsGehenna)
-        || (package == Package.Prototype && !Settings.Default.ownsPrototype)
-        || (package == Package.Editor && !Settings.Default.wantsEditor)) {
-          file.Delete();
-        }
-        processedFiles++;
-        component.SetProgress(processedFiles / files.Length);
-      }
-
-      component.State = VersionState.Active;
+      component.State = previousState;
     }
 
     #region utilities
@@ -242,7 +226,9 @@ but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
 
       foreach (var (stem, relativePath) in files) {
         var dst = new FileInfo($"{Settings.Default.activeVersionLocation}{Path.DirectorySeparatorChar}{relativePath}");
-        if (!dst.Exists) return false;
+        if (!dst.Exists) {
+          return false;
+        }
       }
       return true;
     }
