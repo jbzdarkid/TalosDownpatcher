@@ -110,15 +110,17 @@ namespace TalosDownpatcher {
         }
 
         if (Settings.Default.steamHack == false) {
+          // Note: There are intentional tab characters in this string -- that's because it's a verbatim string.
           Logging.MessageBox("Unable to download",
 @"Steam has broken the download_depots command, so this version can't be downloaded.
 To download versions, please change your beta participation in Steam, re-download the game, then re-launch the downpatcher.
-Version | Steam beta
---------+--------------------
-440323  | NONE
-326589  | previousversion
-252786  | legacy_winxp
-244371  | speedrun-244371");
+
+Version	| Steam beta
+------------|------------------------
+440323	| NONE
+326589	| previousversion
+252786	| legacy_winxp
+244371	| speedrun-244371");
           component.State = previousState;
           return;
         }
