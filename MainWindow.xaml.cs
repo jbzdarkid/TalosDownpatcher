@@ -56,44 +56,46 @@ namespace TalosDownpatcher {
 
       this.Height = 50;
       foreach (int version in ManifestData.allVersions) {
-        using (var uiComponent = new VersionUIComponent(version, this.Height - 50, this)) {
-          bool mainDownloaded = DepotManager.IsFullyDownloaded(version, Package.Main);
-          bool gehennaDownloaded = DepotManager.IsFullyDownloaded(version, Package.Gehenna);
-          bool prototypeDownloaded = DepotManager.IsFullyDownloaded(version, Package.Prototype);
-          bool editorDownloaded = DepotManager.IsFullyDownloaded(version, Package.Editor);
+        var uiComponent = new VersionUIComponent(version, this.Height - 50, this);
+        bool mainDownloaded = DepotManager.IsFullyDownloaded(version, Package.Main);
+        bool gehennaDownloaded = DepotManager.IsFullyDownloaded(version, Package.Gehenna);
+        bool prototypeDownloaded = DepotManager.IsFullyDownloaded(version, Package.Prototype);
+        bool editorDownloaded = DepotManager.IsFullyDownloaded(version, Package.Editor);
 
-          if (mainDownloaded &&
-            (!Settings.Default.ownsGehenna || gehennaDownloaded) &&
-            (!Settings.Default.ownsPrototype || prototypeDownloaded) &&
-            (!Settings.Default.wantsEditor || editorDownloaded)) {
-            // We have downloaded everything we should
-            uiComponent.State = VersionState.Downloaded;
-          } else if (mainDownloaded ||
-            (Settings.Default.ownsGehenna && gehennaDownloaded) ||
-            (Settings.Default.ownsPrototype && prototypeDownloaded) ||
-            (Settings.Default.wantsEditor && editorDownloaded)) {
-            // We haven't downloaded everything, but we do have *something*
-            uiComponent.State = VersionState.PartiallyDownloaded;
-          } else {
-            // We have nothing downloaded
-            uiComponent.State = VersionState.NotDownloaded;
-          }
+        if (mainDownloaded &&
+          (!Settings.Default.ownsGehenna || gehennaDownloaded) &&
+          (!Settings.Default.ownsPrototype || prototypeDownloaded) &&
+          (!Settings.Default.wantsEditor || editorDownloaded)) {
+          // We have downloaded everything we should
+          uiComponent.State = VersionState.Downloaded;
+        } else if (mainDownloaded ||
+          (Settings.Default.ownsGehenna && gehennaDownloaded) ||
+          (Settings.Default.ownsPrototype && prototypeDownloaded) ||
+          (Settings.Default.wantsEditor && editorDownloaded)) {
+          // We haven't downloaded everything, but we do have *something*
+          uiComponent.State = VersionState.PartiallyDownloaded;
+        } else {
+          // We have nothing downloaded
+          uiComponent.State = VersionState.NotDownloaded;
+        }
 
-          if (version == installedVersion) {
-            if (uiComponent.State == VersionState.Downloaded && DepotManager.IsFullyCopied(installedVersion)) {
-              // Only mark active if the data is fully copied.
-              uiComponent.State = VersionState.Active;
-            }
+        if (version == installedVersion) {
+          DepotManager.SaveActiveVersionAsync(uiComponent); // Save any additional files that we find in the active version location
+          if (uiComponent.State == VersionState.Downloaded && DepotManager.IsFullyCopied(installedVersion)) {
+            // Only mark active if the data is fully copied.
+            uiComponent.State = VersionState.Active;
           }
+        }
 
-          // Only add the version if it's downloaded, common, active in steam, or we're showing all versions
-          if (uiComponent.State != VersionState.NotDownloaded
-            || commonVersions.Contains(version)
-            || version == installedVersion
-            || Settings.Default.showAllVersions) {
-            uiComponents[version] = uiComponent;
-            this.Height += 20;
-          }
+        // Only add the version if it's downloaded, common, active in steam, or we're showing all versions
+        if (uiComponent.State != VersionState.NotDownloaded
+          || commonVersions.Contains(version)
+          || version == installedVersion
+          || Settings.Default.showAllVersions) {
+          uiComponents[version] = uiComponent;
+          this.Height += 20;
+        } else {
+          uiComponent.Dispose();
         }
       }
     }
