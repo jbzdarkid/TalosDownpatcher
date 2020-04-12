@@ -93,7 +93,7 @@ namespace TalosDownpatcher {
           new FileInfo(destination).Directory.Create(); // Ensure target folder exists
           using (FileStream fswrite = new FileStream(destination, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, buffSize)) {
             using (BinaryWriter bwwrite = new BinaryWriter(fswrite)) {
-              for (; ; ) {
+              while (true) {
                 int readBytes = bwread.Read(buff, 0, buffSize);
                 if (readBytes == 0) break;
                 bwwrite.Write(buff, 0, readBytes);
@@ -104,6 +104,5 @@ namespace TalosDownpatcher {
         }
       }
     }
-
   }
 }
