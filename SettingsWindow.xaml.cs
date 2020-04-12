@@ -58,12 +58,13 @@ namespace TalosDownpatcher {
 
     private void ButtonSave_Click(object sender, RoutedEventArgs e) {
       if (mainWindow.ActionInProgress()) {
-        Logging.MessageBox($"Cannot save settings while an operation is in progress.", "Error");
+        Logging.MessageBox("Error", $"Cannot save settings while an operation is in progress.");
         return;
       }
 
-      if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked) || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
-        Logging.MessageBox($"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.", "Warning");
+      if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked)
+        || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
+        Logging.MessageBox("Warning", $"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.");
       }
 
       SetActiveLocation(ActiveBox.Text);

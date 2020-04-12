@@ -57,7 +57,7 @@ namespace TalosDownpatcher {
       if (++buffSize >= 5) Flush();
     }
 
-    public static MessageBoxResult MessageBox(string message, string title, MessageBoxButton options = MessageBoxButton.OK) {
+    public static MessageBoxResult MessageBox(string title, string message, MessageBoxButton options = MessageBoxButton.OK) {
       Log(message);
       return System.Windows.MessageBox.Show(message, title, options);
     }

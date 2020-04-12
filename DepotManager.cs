@@ -18,7 +18,6 @@ namespace TalosDownpatcher {
     }
 
     private static void SetActiveVersion(VersionUIComponent component, Action onSetActiveVersion) {
-      Contract.Requires(component != null && onSetActiveVersion != null);
       string activeVersionLocation = Settings.Default.activeVersionLocation;
 
       component.State = VersionState.CopyPending;
@@ -41,7 +40,7 @@ namespace TalosDownpatcher {
         } catch (DirectoryNotFoundException) {
           Logging.Log("Caught DirectoryNotFoundException: Folder already deleted");
         } catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException) {
-          Logging.MessageBox($"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.", "Folder in use");
+          Logging.MessageBox("Folder in use", $"Unable to clear {activeVersionLocation}, please ensure that nothing is using it.");
           component.State = VersionState.Downloaded;
           return;
         }
@@ -79,15 +78,15 @@ namespace TalosDownpatcher {
     }
 
     private static void DownloadDepots(VersionUIComponent component) {
-      Contract.Requires(component != null);
-      component.State = VersionState.DownloadPending; // Pending until we lock
+      var previousState = component.State;
+      component.State = VersionState.DownloadPending; // Pending until we acquire the  lock
       lock (downloadLock) {
         int version = component.version;
 
         Logging.Log($"Downloading depots for {version}");
         var drive = new DriveInfo(new DirectoryInfo(ManifestData.DepotLocation).Root.FullName);
         if (!drive.IsReady) {
-          Logging.MessageBox($"Steam install location is in drive {drive.Name}, which is unavailable.", "Drive unavailable");
+          Logging.MessageBox("Drive unavailable", $"Steam install location is in drive {drive.Name}, which is unavailable.");
           return;
         }
 
@@ -115,9 +114,10 @@ namespace TalosDownpatcher {
 
         long freeSpace = drive.TotalFreeSpace;
         if (drive.TotalFreeSpace < totalDownloadSize) {
-          Logging.MessageBox($@"Steam install location is in drive {drive.Name}
+          Logging.MessageBox("Not enough space",
+$@"Steam install location is in drive {drive.Name}
 has {Math.Round(freeSpace / 1000000000.0, 1)} GB of free space
-but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.", "Not enough space");
+but {Math.Round(totalDownloadSize / 1000000000.0, 1)} GB are required.");
           return;
         }
 
