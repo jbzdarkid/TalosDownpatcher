@@ -19,7 +19,7 @@ namespace TalosDownpatcher {
       AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
       string baseDir = Settings.Default.oldVersionLocation;
       if (!Directory.Exists(baseDir)) {
-        baseDir = Path.GetTempPath();
+        Directory.CreateDirectory(baseDir);
       }
       fs = new FileStream(Path.Combine(baseDir, "TalosDownpatcher.log"), FileMode.Append, FileAccess.Write, FileShare.Write);
       sw = new StreamWriter(fs);
