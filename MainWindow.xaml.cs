@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using TalosDownpatcher.Properties;
 
 // TODO: Progress bar for downloading. This requires estimation of network speeds, which isn't *too* hard. But it's not fun.
@@ -19,6 +18,7 @@ using TalosDownpatcher.Properties;
 // TODO: Blacklist certain root folders (Package.None ?) when saving from steam
 // TODO: Remove Settings.activeVersion
 // TODO: Potentially make SetActiveVersion smarter, we could just delete extra + copy required.
+// TODO: Sanity check logging for invalid target dir / no perms in target dir / maybe just fall back to 'no logging'?
 
 // To make apple happy:
 // - /path/to/downpatcher.exe %command% (steam direct launch option)
