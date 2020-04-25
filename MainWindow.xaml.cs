@@ -15,9 +15,15 @@ using TalosDownpatcher.Properties;
 // ^ Maybe just add an "Open old versions location" button in settings.
 // TODO: It's a little sloppy to run LoadVersions on the UI thread
 
+// TODO: Rewrite this to stop keeping package separate.
+// - All files are "known", i.e. I would have a precise list of every file in every package
+// - All file sizes are known, ergo exact copy state is easy
+// - Save files can be handled / persisted
+// - Changing versions can be smart, as it can just look for 'which files are still around'
+// - Some folders need to match exactly (i.e. Content), some folders are ignored (Logs)
+
 // TODO: Blacklist certain root folders (Package.None ?) when saving from steam
 // TODO: Remove Settings.activeVersion
-// TODO: Potentially make SetActiveVersion smarter, we could just delete extra + copy required.
 // TODO: Sanity check logging for invalid target dir / no perms in target dir / maybe just fall back to 'no logging'?
 
 // To make apple happy:
