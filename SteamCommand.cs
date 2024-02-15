@@ -2,14 +2,12 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
+using System.Windows.Forms;
 using TalosDownpatcher.Properties;
-using WindowsInput;
-using WindowsInput.Native;
 
 namespace TalosDownpatcher {
   public static class SteamCommand {
     public static readonly int GAME_ID = 257510;
-    private static readonly InputSimulator sim = new InputSimulator();
 
     public static void OpenConsole() {
       Logging.Log("Opening steam console");
@@ -26,8 +24,8 @@ namespace TalosDownpatcher {
     public static void DownloadDepot(int appId, int depot, long manifest) {
       Logging.Log($"download_depot {appId} {depot} {manifest}");
       if (manifest == 0) return; // 0 indicates "No such manifest", so we shouldn't attempt to download it.
-      sim.Keyboard.TextEntry($"download_depot {appId} {depot} {manifest}");
-      sim.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+
+      SendKeys.SendWait($"download_depot {appId} {depot} {manifest}{{ENTER}}");
     }
 
     public static void StartModdableGame() {
