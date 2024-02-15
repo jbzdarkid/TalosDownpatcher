@@ -28,8 +28,6 @@
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,78,0,0" Name="ModdableLabel" Content="Launch Moddable Version"/>
     <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="147,84,0,0" Name="ModdableCheckbox"/>
 
-    <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,104,0,0" Name="HackLabel" Content="Modify Steam to re-enable download__depot" RenderTransformOrigin="0.501,-0.397"/>
-    <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="245,110,0,0" Name="HackCheckbox"/>
     <Label VerticalAlignment="Top" HorizontalAlignment="Left" Margin="266,104,0,0" Name="SymlinkLabel" Content="Use Symlinks"/>
     <CheckBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="350,110,0,0" Name="SymlinkCheckbox"/>
 

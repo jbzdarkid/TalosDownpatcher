@@ -20,7 +20,6 @@ namespace TalosDownpatcher {
       EditorCheckbox.IsChecked = settings.wantsEditor;
       ModdableCheckbox.IsChecked = settings.launchModdable;
       SymlinkCheckbox.IsChecked = settings.useSymlinks;
-      HackCheckbox.IsChecked = settings.steamHack;
 
       // Add hooks so that clicking on text toggles checkboxes
       AllVersionsLabel.PreviewMouseDown += delegate { AllVersionsCheckbox.IsChecked = !AllVersionsCheckbox.IsChecked; };
@@ -29,13 +28,10 @@ namespace TalosDownpatcher {
       EditorLabel.PreviewMouseDown += delegate { EditorCheckbox.IsChecked = !EditorCheckbox.IsChecked; };
       ModdableLabel.PreviewMouseDown += delegate { ModdableCheckbox.IsChecked = !ModdableCheckbox.IsChecked; };
       SymlinkLabel.PreviewMouseDown += delegate { SymlinkCheckbox.IsChecked = !SymlinkCheckbox.IsChecked; };
-      HackLabel.PreviewMouseDown += delegate { HackCheckbox.IsChecked = !HackCheckbox.IsChecked; };
 
       if (!showHiddenSettings) Height -= 26; // Height of the final row
       SymlinkCheckbox.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
       SymlinkLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
-      HackCheckbox.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
-      HackLabel.Visibility = showHiddenSettings ? Visibility.Visible : Visibility.Hidden;
     }
 
     private void SetActiveLocation(string location) {
@@ -63,11 +59,9 @@ namespace TalosDownpatcher {
       }
 
       // If the user can download depots, and they're just now turning on gehenna or prototype, warn them about hangs.
-      if ((bool)HackCheckbox.IsChecked) {
-        if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked)
-          || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
-          Logging.MessageBox("Warning", $"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.");
-        }
+      if ((!settings.ownsGehenna && (bool)GehennaCheckbox.IsChecked)
+        || (!settings.ownsPrototype && (bool)PrototypeCheckbox.IsChecked)) {
+        Logging.MessageBox("Warning", $"Warning: Attempting to download Prototype or Gehenna without owning them will cause the downpatcher to get stuck while waiting for the download.");
       }
 
       SetActiveLocation(ActiveBox.Text);
@@ -79,7 +73,6 @@ namespace TalosDownpatcher {
       settings.wantsEditor = (bool)EditorCheckbox.IsChecked;
       settings.launchModdable = (bool)ModdableCheckbox.IsChecked;
       settings.useSymlinks = (bool)SymlinkCheckbox.IsChecked;
-      settings.steamHack = (bool)HackCheckbox.IsChecked;
 
       settings.Save(); // Writes to disk
       mainWindow.LoadVersions(); // Reload versions for potential changes
@@ -96,7 +89,6 @@ namespace TalosDownpatcher {
       EditorCheckbox.IsChecked = false;
       ModdableCheckbox.IsChecked = false;
       SymlinkCheckbox.IsChecked = false;
-      HackCheckbox.IsChecked = false;
     }
 
     private void ActiveLocation_Click(object sender, RoutedEventArgs e) {

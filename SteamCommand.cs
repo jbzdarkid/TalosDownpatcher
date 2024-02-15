@@ -16,12 +16,6 @@ namespace TalosDownpatcher {
       bool wasRunning = IsProcessActive("steam");
       Process.Start("steam://open/console");
       WaitForProcessToLaunch("Steam", 10);
-      if (Settings.Default.steamHack) {
-        Memory.FindAndReplace("steam",
-          new byte[] { 0xFF, 0xD0, 0x84, 0xC0, 0x0F, 0x85, 0x2E, 0xFF, 0xFF, 0xFF },
-          new byte[] { 0xFF, 0xD0, 0x84, 0xC0, 0x90, 0xE9, 0x2E, 0xFF, 0xFF, 0xFF }
-        );
-      }
       if (wasRunning) {
         Thread.Sleep(100); // Slight delay for steam to become foreground
       } else {
